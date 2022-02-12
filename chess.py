@@ -1,53 +1,39 @@
 import math
 from logging import *
 import enum
+from typing import List
 
-black_color = '\033[04m\033[36m' #cyan
-white_color = '\033[95m' #pink
+from numpy import empty
+
+black_color = '\033[36m' #cyan
+white_color = '\033[95m\033[04m' #pink
 reset_color = '\033[0m'
 
 class Piece:
     def __init__(self, team, board) -> None:
-        """
-        team should be "0" or "1 #todo update docstring
-        """
+     
         self.team = team
-        # self.position = position
         self.board = board
-    # @abc.abstractclassmethod
-    # def get_potential_moves(self):
-    #     pass
+    #  ♛ | ♚ | ♝ | ♞ | ♜ | ♟
+    #  ♕ | ♔ | ♗ | ♘ | ♖ | ♙ 
     
 class Pawn(Piece):
     value = 1
-    past_positions = []
-    
+
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color + "P" + reset_color
         return white_color+ "p"+ reset_color
     
     def get_potential_moves(self):
-        # positions = []
-        # x = self.position[0]
-        # y = self.position[1]
-        # opponents = []
-        # if self.team ==Team.black:
-        #     opponents += [1,3]
-
-        #     if len(self.past_positions) == 0:
-        #         if(self.board.getSpace((x, y+2)).team == 1 or 
-        #             self.board.getSpace((x, y+2)).team == 3):
-        #             positions += (x,y+2)
-
-        return 
+        
+        return {}
         
     def add_move(self, move):
         self.moves += move
 
 class Bishop(Piece):
     value = 3
-    moves = {}
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color + "B"+ reset_color
@@ -55,7 +41,6 @@ class Bishop(Piece):
 
 class Knight(Piece):
     value = 3
-    moves = {}
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color +"N"+ reset_color
@@ -63,7 +48,6 @@ class Knight(Piece):
 
 class Rook(Piece):
     value = 5
-    moves = {}
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color +"R"+ reset_color
@@ -71,7 +55,6 @@ class Rook(Piece):
 
 class Queen(Piece):
     value = 9
-    moves = {}
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color +"Q"+ reset_color
@@ -79,7 +62,6 @@ class Queen(Piece):
 
 class King(Piece):
     value = math.inf
-    move = {}
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color +"K"+ reset_color
@@ -87,30 +69,53 @@ class King(Piece):
 
 class Empty():
     def __repr__(self) -> str:
-        return " "
+        return "_"
 
 class Team(enum.Enum):
     white = 0
     black = 1
     empty = 2
 
+board_to_coord = {
+    'a':0,
+    'b':1,
+    'c':2,
+    'd':3,
+    'e':4,
+    'f':5,
+    'g':6,
+    'h':7,
+    '1':0,
+    '2':1,
+    '3':2,
+    '4':3,
+    '5':4,
+    '6':5,
+    '7':6,
+    '8':7 
+}
+
 class Move():
     
-    def __init__(self, notation):
-        self.location = notation[-2:]
-        if len(notation)>2:
-            self.piece = notation[0]
-        else:
-            self.piece = ""
-        
+    def __init__(self, space1, space2):
+        print(space1,) 
+        print(space2)
+        self.x1 = board_to_coord[space1[0]]
+        self.y1 = board_to_coord[space1[1]]
 
+        self.x2 = board_to_coord[space2[0]]
+        self.y2 = board_to_coord[space2[1]]
+    
     def __repr__(self) -> str:
-        return str(self.piece) + str(self.location)
+        return str(((self.x1, self.x2), (self.y1,self.y2)))
     
 class Space():
     def __init__(self, pos, piece) -> None:
-        self.piece = piece
+        self.piece = piece 
         self.piece = pos  
+    
+    def set_piece(self, p)-> None:
+        self.piece = p
 
     def __repr__(self) -> str:
         return str(self.piece)
@@ -139,7 +144,7 @@ class Board():
         board_string = state[0]
         x = y = 0
         for i in board_string:
-            print(i)
+            # print(i)
             if i == '/':
                 x =  0
                 y += 1
@@ -171,30 +176,86 @@ class Board():
 
     def set_current_player(self, next_player):
         self.current_player = next_player
-
-    def execute(self, move):
-        pass
     
-    def printBoard(self):
-        """
-        Returns a string representation of the board
-        """
-        print('  | a | b | c | d | e | f | g | h |')
-        print('--|-------------------------------|--')
-        count = 8
-        for i in self.grid:
-            print(str(count), end=' |')
-            
-            for j in i:
-                print('' +' \033[1m' + str(j)+'\033[0m ', end='|')
-            print(' '+str(count),'\n--|-------------------------------|--')
-            count -=1
-        print('  | a | b | c | d | e | f | g | h |')
+    def get_board(self) -> List[list]:
+        return self.grid
 
-    def getSpace(self, position):
-        return self.board[position[0]][position[1]]
+    def get_inverse_board(self) -> List[list]:
+        inverse_board = []
+        # for i in self.grid:
+        #     inverse_board.append(i)
+        self.grid.reverse()
+        for i in self.grid:
+            i.reverse()
+            inverse_board.append(i)
+            i.reverse()
+        self.grid.reverse()
+        return inverse_board
+
+    def execute(self, move)->None:
+        space1 = self.getSpace((move.x1, move.y1))
+        space2 = self.getSpace((move.x2, move.y2))        
+        space2.set_piece(space1.piece)
+        space1.set_piece(Empty())
+        
+        
+    
+    
+
+    def getSpace(self, space)-> Space:
+        return self.grid[space[1]][space[0]]
         
 
     def checkMate():
         return False
+        
+    def pp(self, flip_board=False):
+        """
+        Returns a string representation of the board
+        """
+        header = "  | a | b | c | d | e | f | g | h |  "
+        row_separater = '--|-------------------------------|--'
+        out = ""
+
+        if self.current_player == Team.black and flip_board:
+            gd = self.get_inverse_board() 
+            header = header[::-1]
+            side_num = {
+                0:8,
+                1:7,
+                2:6,
+                3:5,
+                4:4,
+                5:3,
+                6:2,
+                7:1
+            }
+        else:
+            gd = self.get_board()
+            side_num = {
+                0:1,
+                1:2,
+                2:3,
+                3:4,
+                4:5,
+                5:6,
+                6:7,
+                7:8
+            }
+
+        out += header + '\n'
+        out += row_separater + '\n'
+        count = 0
+        for row in gd: 
+            out += str(side_num[count])+' |'
+            
+            for col in row:
+                out += ' \033[1m' + str(col)+'\033[0m |'
+
+            out += ' '+str(side_num[count])+'\n' 
+            out += row_separater + '\n'
+            
+            count +=1
+        out += header
+        print(out)
         

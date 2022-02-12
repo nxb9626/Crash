@@ -1,5 +1,10 @@
+from numpy import true_divide
 from chess import Board, Move, Team
-# from logging import *
+
+################################################################################
+flip_board = False
+
+################################################################################
 
 def gameLoop(white,black):
     game = Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
@@ -14,11 +19,12 @@ def gameLoop(white,black):
 
     while Board.checkMate() == False:
         # clear old board
+        
         print(chr(27) + "[2J")
+
         print('Player turn: ', game.get_current_player(), '\n')
         # print new board
-        game.printBoard()
-        print('Next Move: ', end='')
+        game.pp(flip_board=flip_board)
         # get next move
         move = get_move[game.current_player]()
         if game.is_valid(move):
@@ -26,7 +32,8 @@ def gameLoop(white,black):
             # game.moves.append(move)
         else:
             continue
-        print(game.moves)
+        # log(game.get_inverse_board())
+
         game.set_current_player(next_turn[game.get_current_player()])
 
     return "Winner: " + game.get_current_player()
@@ -35,9 +42,16 @@ def bot_input():
     pass
 
 def user_input():
-    str_note = input()
-    return Move(str_note)
-
+    print('Next Move: ', end='')
+    try:
+        str_note = input().strip().split(' ')
+        if str_note[0] == str_note[1]: return user_input()
+        return (Move(str_note[0], str_note[1]))
+    except KeyboardInterrupt:
+        exit()
+    except IndexError:
+        # print(Exception.with_traceback())
+        return user_input()
 
 
 def main():
@@ -46,5 +60,5 @@ def main():
     gameLoop(white, black)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':    
     main()
