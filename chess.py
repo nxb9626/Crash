@@ -1,6 +1,7 @@
 import math
 from logging import *
 import enum
+from typing import List
 
 black_color = '\033[36m' #cyan
 white_color = '\033[95m\033[04m' #pink
@@ -65,8 +66,11 @@ class King(Piece):
         return white_color+ "k"+ reset_color
 
 class Empty():
+    """
+    ⬛⬜⬛⬜⬛⬜⬛⬜
+    """
     def __repr__(self) -> str:
-        return "_"
+        return " "
 
 class Team(enum.Enum):
     white = 0
@@ -159,7 +163,7 @@ class Board():
         if state[1] == 'w': self.current_player = Team.white 
         elif state[1] == 'b': self.current_player = Team.black
         
-        self.moves = int(state[-1])
+        # self.moves = int(state[1])
         
     def is_valid(self, move) -> bool:
         #check correct player is moving correct piece
@@ -174,19 +178,14 @@ class Board():
     def set_current_player(self, next_player) -> None:
         self.current_player = next_player
     
-    def get_board(self) -> list[list]:
+    def get_board(self) -> List[list]:
         return self.grid
 
-    def get_inverse_board(self) -> list[list]:
-        inverse_board = []
-        # for i in self.grid:
-        #     inverse_board.append(i)
-        self.grid.reverse()
-        for i in self.grid:
-            i.reverse()
-            inverse_board.append(i)
-            i.reverse()
-        self.grid.reverse()
+    def get_inverse_board(self) -> List[list]:
+        inverse_board = []        
+        for i in self.grid[::-1]:
+            inverse_board.append(i[::-1])
+
         return inverse_board
 
     def execute(self, move) -> None:
@@ -216,29 +215,10 @@ class Board():
         if self.current_player == Team.black and flip_b:
             gd = self.get_inverse_board() 
             header = header[::-1]
-            
-            side_num = {
-                0:1,
-                1:2,
-                2:3,
-                3:4,
-                4:5,
-                5:6,
-                6:7,
-                7:8
-            }
+            side_num = {0:1,1:2,2:3,3:4,4:5,5:6,6:7,7:8}
         else:
             gd = self.get_board()
-            side_num = {
-                0:8,
-                1:7,
-                2:6,
-                3:5,
-                4:4,
-                5:3,
-                6:2,
-                7:1
-            }
+            side_num = {0:8,1:7,2:6,3:5,4:4,5:3,6:2,7:1}
 
         out += header + '\n'
         out += row_separater + '\n'

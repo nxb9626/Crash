@@ -1,11 +1,12 @@
 from chess import Board, Move, Team
 
 ################################################################################
-flip_board = False
+flip_board = True
 ################################################################################
 
 def gameLoop(white,black):
-    game = Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    # game = Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+    game = Board("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ")
     next_turn={ Team.white:Team.black,
             Team.black:Team.white
     }
