@@ -1,9 +1,6 @@
 import math
 from logging import *
 import enum
-from typing import List
-
-from numpy import empty
 
 black_color = '\033[36m' #cyan
 white_color = '\033[95m\033[04m' #pink
@@ -25,7 +22,7 @@ class Pawn(Piece):
             return black_color + "P" + reset_color
         return white_color+ "p"+ reset_color
     
-    def get_potential_moves(self):
+    def get_potential_moves(self) -> dict:
         
         return {}
         
@@ -85,19 +82,19 @@ board_to_coord = {
     'f':5,
     'g':6,
     'h':7,
-    '1':0,
-    '2':1,
-    '3':2,
-    '4':3,
-    '5':4,
-    '6':5,
-    '7':6,
-    '8':7 
+    '1':7,
+    '2':6,
+    '3':5,
+    '4':4,
+    '5':3,
+    '6':2,
+    '7':1,
+    '8':0 
 }
 
 class Move():
     
-    def __init__(self, space1, space2):
+    def __init__(self, space1, space2) -> None:
         print(space1,) 
         print(space2)
         self.x1 = board_to_coord[space1[0]]
@@ -114,7 +111,7 @@ class Space():
         self.piece = piece 
         self.piece = pos  
     
-    def set_piece(self, p)-> None:
+    def set_piece(self, p) -> None:
         self.piece = p
 
     def __repr__(self) -> str:
@@ -122,7 +119,7 @@ class Space():
     
 
 class Board():
-    def __init__(self, fenstring):
+    def __init__(self, fenstring) -> None:
         self.moves_without_caputres = 0
         self.grid = [[]]
         pieces = {
@@ -164,23 +161,23 @@ class Board():
         
         self.moves = int(state[-1])
         
-    def is_valid(self, move):
+    def is_valid(self, move) -> bool:
         #check correct player is moving correct piece
         #check is not same player playing twice
         #check is not putting their king in check
         #check is not a draw
         return True
         
-    def get_current_player(self):
+    def get_current_player(self) -> Team:
         return self.current_player
 
-    def set_current_player(self, next_player):
+    def set_current_player(self, next_player) -> None:
         self.current_player = next_player
     
-    def get_board(self) -> List[list]:
+    def get_board(self) -> list[list]:
         return self.grid
 
-    def get_inverse_board(self) -> List[list]:
+    def get_inverse_board(self) -> list[list]:
         inverse_board = []
         # for i in self.grid:
         #     inverse_board.append(i)
@@ -192,24 +189,23 @@ class Board():
         self.grid.reverse()
         return inverse_board
 
-    def execute(self, move)->None:
+    def execute(self, move) -> None:
         space1 = self.getSpace((move.x1, move.y1))
         space2 = self.getSpace((move.x2, move.y2))        
         space2.set_piece(space1.piece)
         space1.set_piece(Empty())
         
-        
-    
-    
-
-    def getSpace(self, space)-> Space:
+    def getSpace(self, space) -> Space:
         return self.grid[space[1]][space[0]]
         
 
-    def checkMate():
+    def checkMate() -> bool:
         return False
-        
-    def pp(self, flip_board=False):
+
+    def pp(self, flip_board=False) -> None:
+        print(self.pretty_format_board(flip_board))
+
+    def pretty_format_board(self, flip_b=False) -> str:
         """
         Returns a string representation of the board
         """
@@ -217,21 +213,10 @@ class Board():
         row_separater = '--|-------------------------------|--'
         out = ""
 
-        if self.current_player == Team.black and flip_board:
+        if self.current_player == Team.black and flip_b:
             gd = self.get_inverse_board() 
             header = header[::-1]
-            side_num = {
-                0:8,
-                1:7,
-                2:6,
-                3:5,
-                4:4,
-                5:3,
-                6:2,
-                7:1
-            }
-        else:
-            gd = self.get_board()
+            
             side_num = {
                 0:1,
                 1:2,
@@ -241,6 +226,18 @@ class Board():
                 5:6,
                 6:7,
                 7:8
+            }
+        else:
+            gd = self.get_board()
+            side_num = {
+                0:8,
+                1:7,
+                2:6,
+                3:5,
+                4:4,
+                5:3,
+                6:2,
+                7:1
             }
 
         out += header + '\n'
@@ -257,5 +254,5 @@ class Board():
             
             count +=1
         out += header
-        print(out)
+        return out
         

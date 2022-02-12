@@ -1,9 +1,7 @@
-from numpy import true_divide
 from chess import Board, Move, Team
 
 ################################################################################
 flip_board = False
-
 ################################################################################
 
 def gameLoop(white,black):
