@@ -12,18 +12,17 @@ class Piece:
      
         self.team = team
         self.board = board
-    #  ♛ | ♚ | ♝ | ♞ | ♜ | ♟
-    #  ♕ | ♔ | ♗ | ♘ | ♖ | ♙ 
+    #  ♛ | ♚ | ♝ | ♞ | ♜ | ♟ 
+    #  ♕ | ♔ | ♗ | ♘ | ♖ | ♙  
     
 class Pawn(Piece):
-    value = 1
 
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color + "P" + reset_color
         return white_color+ "p"+ reset_color
     
-    def get_potential_moves(self) -> dict:
+    def get_moves(self) -> dict:
         
         return {}
         
@@ -31,35 +30,47 @@ class Pawn(Piece):
         self.moves += move
 
 class Bishop(Piece):
-    value = 3
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color + "B"+ reset_color
         return white_color+ "b"+ reset_color
 
 class Knight(Piece):
-    value = 3
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color +"N"+ reset_color
         return white_color+ "n"+ reset_color
 
 class Rook(Piece):
-    value = 5
+    def get_moves(self, pos) -> dict:
+        # piece_x = pos[0]
+        # piece_y = pos[1]
+        # #check left of row
+        # for temp_x in range(piece_x,0):
+        #     space = self.board.get_space((temp_x,piece_y))
+        #     if space.is_empty();
+            
+            
+
+        return {}
+
+    
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color +"R"+ reset_color
         return white_color+ "r"+ reset_color
 
 class Queen(Piece):
-    value = 9
+    def get_moves(self, pos) -> dict:
+        
+        moves = {}
+
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color +"Q"+ reset_color
         return white_color+ "q"+ reset_color
 
 class King(Piece):
-    value = math.inf
     def __repr__(self) -> str:
         if self.team == Team.black:
             return black_color +"K"+ reset_color
@@ -78,22 +89,8 @@ class Team(enum.Enum):
     empty = 2
 
 board_to_coord = {
-    'a':0,
-    'b':1,
-    'c':2,
-    'd':3,
-    'e':4,
-    'f':5,
-    'g':6,
-    'h':7,
-    '1':7,
-    '2':6,
-    '3':5,
-    '4':4,
-    '5':3,
-    '6':2,
-    '7':1,
-    '8':0 
+    'a':0,'b':1,'c':2,'d':3,'e':4,'f':5,'g':6,'h':7,
+    '1':7,'2':6,'3':5,'4':4,'5':3,'6':2,'7':1,'8':0 
 }
 
 class Move():
@@ -112,11 +109,14 @@ class Move():
     
 class Space():
     def __init__(self, pos, piece) -> None:
+        self.pos = pos  
         self.piece = piece 
-        self.piece = pos  
-    
+
     def set_piece(self, p) -> None:
         self.piece = p
+
+    def get_moves(self):
+        return self.piece.get_moves(self.pos, self.board)
 
     def __repr__(self) -> str:
         return str(self.piece)
@@ -154,10 +154,10 @@ class Board():
                 try:
                     space_count = int(i)
                     for _ in range((space_count)):
-                        self.grid[-1].append(Space(Empty(), (x,y)))
+                        self.grid[-1].append(Space((x,y), Empty()))
                         x += 1
                 except(ValueError):
-                    self.grid[-1].append(Space(pieces[i], (x,y)))
+                    self.grid[-1].append(Space((x,y), pieces[i]))
                 
 
         if state[1] == 'w': self.current_player = Team.white 
@@ -189,20 +189,23 @@ class Board():
         return inverse_board
 
     def execute(self, move) -> None:
-        space1 = self.getSpace((move.x1, move.y1))
-        space2 = self.getSpace((move.x2, move.y2))        
+        space1 = self.get_space((move.x1, move.y1))
+        space2 = self.get_space((move.x2, move.y2))        
         space2.set_piece(space1.piece)
         space1.set_piece(Empty())
         
-    def getSpace(self, space) -> Space:
+    def get_space(self, space) -> Space:
         return self.grid[space[1]][space[0]]
         
-
+    
     def checkMate() -> bool:
         return False
 
     def pp(self, flip_board=False) -> None:
         print(self.pretty_format_board(flip_board))
+
+    def __repr__(self) -> str:
+        return self.pretty_format_board()
 
     def pretty_format_board(self, flip_b=False) -> str:
         """
@@ -210,7 +213,7 @@ class Board():
         """
         header = "  | a | b | c | d | e | f | g | h |  "
         row_separater = '--|-------------------------------|--'
-        out = ""
+        out = "\n"
 
         if self.current_player == Team.black and flip_b:
             gd = self.get_inverse_board() 
@@ -234,5 +237,6 @@ class Board():
             
             count +=1
         out += header
+        out +='\n'
         return out
         
