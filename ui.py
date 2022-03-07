@@ -18,61 +18,39 @@ class Piece:
 class Pawn(Piece):
 
     def __repr__(self) -> str:
-        if self.team == Team.black:
+        if self.team != Team.black:
             return black_color + "P" + reset_color
         return white_color+ "p"+ reset_color
-    
-    def get_moves(self) -> dict:
-        
-        return {}
-        
-    def add_move(self, move):
-        self.moves += move
 
 class Bishop(Piece):
     def __repr__(self) -> str:
-        if self.team == Team.black:
+        if self.team != Team.black:
             return black_color + "B"+ reset_color
         return white_color+ "b"+ reset_color
 
 class Knight(Piece):
     def __repr__(self) -> str:
-        if self.team == Team.black:
+        if self.team != Team.black:
             return black_color +"N"+ reset_color
         return white_color+ "n"+ reset_color
 
 class Rook(Piece):
-    def get_moves(self, pos) -> dict:
-        # piece_x = pos[0]
-        # piece_y = pos[1]
-        # #check left of row
-        # for temp_x in range(piece_x,0):
-        #     space = self.board.get_space((temp_x,piece_y))
-        #     if space.is_empty();
-            
-            
-
-        return {}
-
     
     def __repr__(self) -> str:
-        if self.team == Team.black:
+        if self.team != Team.black:
             return black_color +"R"+ reset_color
         return white_color+ "r"+ reset_color
 
 class Queen(Piece):
-    def get_moves(self, pos) -> dict:
-        
-        moves = {}
 
     def __repr__(self) -> str:
-        if self.team == Team.black:
+        if self.team != Team.black:
             return black_color +"Q"+ reset_color
         return white_color+ "q"+ reset_color
 
 class King(Piece):
     def __repr__(self) -> str:
-        if self.team == Team.black:
+        if self.team != Team.black:
             return black_color +"K"+ reset_color
         return white_color+ "k"+ reset_color
 
@@ -93,19 +71,6 @@ board_to_coord = {
     '1':7,'2':6,'3':5,'4':4,'5':3,'6':2,'7':1,'8':0 
 }
 
-class Move():
-    
-    def __init__(self, space1, space2) -> None:
-        print(space1,) 
-        print(space2)
-        self.x1 = board_to_coord[space1[0]]
-        self.y1 = board_to_coord[space1[1]]
-
-        self.x2 = board_to_coord[space2[0]]
-        self.y2 = board_to_coord[space2[1]]
-    
-    def __repr__(self) -> str:
-        return str(((self.x1, self.x2), (self.y1,self.y2)))
     
 class Space():
     def __init__(self, pos, piece) -> None:
@@ -123,7 +88,8 @@ class Space():
     
 
 class Board():
-    def __init__(self, fenstring) -> None:
+    def __init__(self, game) -> None:
+        fenstring = game.fen()
         self.moves_without_caputres = 0
         self.grid = [[]]
         pieces = {
@@ -162,16 +128,7 @@ class Board():
 
         if state[1] == 'w': self.current_player = Team.white 
         elif state[1] == 'b': self.current_player = Team.black
-        
-        # self.moves = int(state[1])
-        
-    def is_valid(self, move) -> bool:
-        #check correct player is moving correct piece
-        #check is not same player playing twice
-        #check is not putting their king in check
-        #check is not a draw
-        return True
-        
+                
     def get_current_player(self) -> Team:
         return self.current_player
 
@@ -212,7 +169,7 @@ class Board():
         Returns a string representation of the board
         """
         header = "  | a | b | c | d | e | f | g | h |  "
-        row_separater = '--|-------------------------------|--'
+        row_separater = '--+---+---+---+---+---+---+---+---+--'
         out = "\n"
 
         if self.current_player == Team.black and flip_b:
