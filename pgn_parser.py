@@ -23,7 +23,7 @@ def parse_moves(line):
         
 
 def read_file_to_dataframe(file_name):
-    x = pandas.DataFrame()
+    df = pandas.DataFrame()
     with open(file_name) as file:
         #build dictionary
         piece = {}
@@ -31,22 +31,25 @@ def read_file_to_dataframe(file_name):
         for un_formatted_line in file:
             if un_formatted_line=='\n':
                 at_moves = True
-                continue
-            if at_moves:
+                
+            elif at_moves:
                 moves = parse_moves(un_formatted_line)
                 piece['moves'] = moves
+
             else:
-                formatted_line = re.sub(r'[^a-zA-Z1-9 ]', '', un_formatted_line).split(' ', 1)
+                formatted_line = re.sub(r'[^a-zA-Z1-9 ]', '',
+                    un_formatted_line).split(' ', 1)
                 try:
                     piece[formatted_line[0]] = formatted_line[1]
                 except:
                     print("ERROR: " + str(formatted_line))
-        
         pprint(piece)
 
-    return None
+    return df
             
 
 if __name__ == "__main__":
     file_name = "example.pgn"
-    read_file_to_dataframe(file_name=file_name)
+    x = read_file_to_dataframe(file_name=file_name)
+    print(x)
+

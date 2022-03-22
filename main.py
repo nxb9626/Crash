@@ -1,8 +1,10 @@
+from numpy import true_divide
 import ui
 import chess as ch
 import random
 import re
 import logging
+import sys
 ################################################################################
 flip_board = True
 ################################################################################
@@ -15,82 +17,79 @@ def logGame(game):
 
     
     
-def gameLoop(white,black):
+def gameLoop(autogame, black_move, white_move):
     game = ch.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     next_turn={ ui.Team.white: ui.Team.black,
             ui.Team.black:ui.Team.white
     }
-    # for move in game.move_stack:
-        
-    
 
-    # get_move={
-    #     ui.Team.white:user_input,
-    #     ui.Team.black:user_input
-    # }
     current_player = ui.Team.white
     count = 0
     while game.is_game_over() == False:
+        # input()
         # clear old board
-        print(chr(27) + "[2J")
+        # print(chr(27) + "[2J")
+
+        if current_player == ui.Team.white and not autogame:
+            move = white_input(game)
+        else:
+            move = black_input(game.fen())
+        game.push(move) 
+        count+=1
         fancyPrint = ui.Board(game)
         fancyPrint.pp()
-        print('Player turn: ', current_player, '\n')
-        # print new board
-        # get next move
-        # print(list[game.legal_moves])
-        # move = input("Move:")
-        if current_player == ui.Team.white:
-            move = user_input(game)
-        else:
-            move = bot_input(game.fen())
-        # if len(move) <=4 and len(move) >=5 and \
-            # ch.Move.from_uci(move) in game.legal_moves:
-        game.push(move) 
-        # move = get_move[game.current_player]()
-        # if game.is_valid(move):
-        #     game.execute(move)
-        #     # game.moves.append(move)
-        # else:
-        #     continue
-        # log(game.get_inverse_board())
-        count+=1
         print(count)
-
+        print('Player turn: ', current_player, '\n')
         current_player = next_turn[current_player]
 
-    return "Winner: " + game.result()
+    return "Winner: ", game.result()
+def print_move(move,board):
+    print(board.piece_at(move.from_square), end='')
+    print(str( move)[0:2], end=', ')
 
-def bot_input(fen):
+def print_move_list(move_list, board):
+    for i in move_list:
+        print_move(i,board)
+    print()
+
+def white_input(fen):
     board = ch.Board(fen)
     move_list = list(board.legal_moves)
+    print_move_list(move_list=move_list, board=board)
+
     x = len(move_list)
     x = random.randint(0, len(move_list)-1)
-    return move_list[x]
-    
+    move = move_list[-1]
+
+    return move
+
+def black_input(fen):
+    board = ch.Board(fen)
+    move_list = list(board.legal_moves)
+    print_move_list(move_list=move_list, board=board)
+
+    # x = len(move_list)
+    # x = random.randint(0, len(move_list)-1)
+    move = move_list[-1]
+    return move
 
 def user_input(game) -> str:
-    # print(list(game.legal_moves))
     move = ch.Move.from_uci(input("Your Move:"))
-    # while not re.match(ch, move) and not (move in game.legal_moves):
-        # move = str(input("Your Move:"))
     return move
-#     print('Next Move: ', end='')
-#     try:
-#         str_note = input().strip().split(' ')
-#         if str_note[0] == str_note[1]: return user_input()
-#         return (Move(str_note[0], str_note[1]))
-#     except KeyboardInterrupt:
-#         exit()
-#     except IndexError:
-#         # print(Exception.with_traceback())
-#         return user_input()
-
 
 def main():
-    white=0
-    black=1
-    gameLoop(white, black)
+    autogame = True
+    b = black_input
+    w = white_input
+    x = gameLoop(autogame, black_move=b, white_move=w)
+    
+    print(x[0], {
+        '0-1':'Blue',
+        '1/2-1/2':'stalemate',
+        '1-0':'Pink',
+        '1-1':'tie'
+    }[x[1]])
+
 
 
 if __name__ == '__main__':    
