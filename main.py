@@ -1,12 +1,12 @@
-from numpy import true_divide
 import ui
 import chess as ch
 import random
-import re
 import logging
-import sys
+import requests
 ################################################################################
 flip_board = True
+WHITE_BOT_URL = 'http://127.0.0.1:5000'
+BLACK_BOT_URL = 'http://127.0.0.1:5000'
 ################################################################################
 
 def logGame(game):
@@ -53,25 +53,22 @@ def print_move_list(move_list, board):
     print()
 
 def white_input(fen):
-    board = ch.Board(fen)
-    move_list = list(board.legal_moves)
-    print_move_list(move_list=move_list, board=board)
-
-    x = len(move_list)
-    x = random.randint(0, len(move_list)-1)
-    move = move_list[-1]
-
-    return move
-
-def black_input(fen):
-    board = ch.Board(fen)
-    move_list = list(board.legal_moves)
-    print_move_list(move_list=move_list, board=board)
+    # board = ch.Board(fen)
+    # move_list = list(board.legal_moves)
+    # print_move_list(move_list=move_list, board=board)
 
     # x = len(move_list)
     # x = random.randint(0, len(move_list)-1)
-    move = move_list[-1]
-    return move
+    # move = move_list[-1]
+    move = requests.get(WHITE_BOT_URL,json={'fen':fen})
+    chosen_move = move.json()['move']
+    return ch.Move.from_uci(chosen_move)
+
+def black_input(fen):
+    move = requests.get(BLACK_BOT_URL,json={'fen':fen})
+    chosen_move = move.json()['move']
+    return ch.Move.from_uci(chosen_move)
+    # return chosen_move
 
 def user_input(game) -> str:
     move = ch.Move.from_uci(input("Your Move:"))
@@ -93,4 +90,5 @@ def main():
 
 
 if __name__ == '__main__':    
+    
     main()
