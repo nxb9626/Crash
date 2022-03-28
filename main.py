@@ -15,13 +15,12 @@ def logGame(game):
         moves += move.uci()+" "
     logging.info(str(game.fen()), moves)
 
-    
-    
+
 def gameLoop(autogame, black_move, white_move):
     game = ch.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
     next_turn={ ui.Team.white: ui.Team.black,
             ui.Team.black:ui.Team.white
-    }
+        }
 
     current_player = ui.Team.white
     count = 0
@@ -34,10 +33,14 @@ def gameLoop(autogame, black_move, white_move):
             move = white_input(game)
         else:
             move = black_input(game.fen())
+        print(count)
+        # print(game.generate_legal_moves())
         game.push(move) 
+        print(move.uci())
         count+=1
         fancyPrint = ui.Board(game)
         fancyPrint.pp()
+        # print(game,'\n')
         # print(count)
         # print('Player turn: ', current_player, '\n')
         current_player = next_turn[current_player]
