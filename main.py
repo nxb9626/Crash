@@ -4,7 +4,6 @@ import random
 import logging
 import requests
 ################################################################################
-flip_board = True
 WHITE_BOT_URL = 'http://127.0.0.1:5000'
 BLACK_BOT_URL = 'http://127.0.0.1:5000'
 ################################################################################
@@ -57,9 +56,12 @@ def print_move_list(move_list, board):
     print()
 
 def white_input(fen):
+    
     move = requests.get(WHITE_BOT_URL,json={'fen':fen})
     chosen_move = move.json()['move']
-    return ch.Move.from_uci(chosen_move)
+    # game = ch.Board(fen)
+    # x = list(game.legal_moves)
+    return chosen_move
 
 def black_input(fen):
     move = requests.get(BLACK_BOT_URL,json={'fen':fen})
