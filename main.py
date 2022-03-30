@@ -25,21 +25,24 @@ def gameLoop(autogame, black_move, white_move):
     current_player = ui.Team.white
     count = 0
     while game.is_game_over() == False:
+        print(current_player.name,end="'s next move\n")
+        fancyPrint = ui.Board(game)
+        fancyPrint.pp()
         # input()
         # clear old board
         # print(chr(27) + "[2J")
 
         if current_player == ui.Team.white and not autogame:
-            move = white_input(game)
+            move = white_move(game.fen())
         else:
-            move = black_input(game.fen())
+            move = black_move(game.fen())
         # print(count)
         # print(game.generate_legal_moves())
         game.push(move) 
         # print(move.uci())
         count+=1
-        fancyPrint = ui.Board(game)
-        fancyPrint.pp()
+        # fancyPrint = ui.Board(game)
+        # fancyPrint.pp()
         # print(game,'\n')
         # print(count)
         # print('Player turn: ', current_player, '\n')
@@ -57,6 +60,7 @@ def print_move_list(move_list, board):
     print()
 
 def white_input(fen):
+    # print("white's move")
     move = requests.get(WHITE_BOT_URL,json={'fen':fen})
     chosen_move = move.json()['move']
     # game = ch.Board(fen)
@@ -64,12 +68,15 @@ def white_input(fen):
     return chosen_move
 
 def black_input(fen):
+    # print("blacks's move")
+
     move = requests.get(BLACK_BOT_URL,json={'fen':fen})
     chosen_move = move.json()['move']
     return ch.Move.from_uci(chosen_move)
     # return chosen_move
 
 def random_input(fen):
+    print("random's move")
     return random.choice(list(ch.Board(fen).legal_moves))
     
 def user_input(game) -> str:
@@ -81,9 +88,9 @@ def main():
     x = gameLoop(autogame, black_move=black_input, white_move=random_input)
     
     return (x[0], {
-        '0-1':'Blue', #black
+        '0-1':'Pink', #black
         '1/2-1/2':'stalemate',
-        '1-0':'Pink', # white
+        '1-0':'Blue', # white
         '1-1':'tie'
     }[x[1]])
 
