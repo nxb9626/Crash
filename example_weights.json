@@ -1,0 +1,19 @@
+{
+    "max_depth":0,
+    "king_weight":0,
+    "queen_weight":0,
+    "rook_weight":0,
+    "bishop_weight":0,
+    "knight_weight":0,
+    "pawn_structure_weight":0,
+    "space_weight":0,
+    "center_control":0,
+    "opponent_threats":0,
+    "piece_positions":{
+        "rook_depth - 7th best":0,
+        "bishops_on_diagonals":0,
+        "rook_in_open_columns":0
+    },
+    "checking_opponent":0,
+    "attacking_opponent":0
+}

@@ -1,3 +1,4 @@
+from pprint import pp
 import ui
 import chess as ch
 import random
@@ -32,10 +33,10 @@ def gameLoop(autogame, black_move, white_move):
             move = white_input(game)
         else:
             move = black_input(game.fen())
-        print(count)
+        # print(count)
         # print(game.generate_legal_moves())
         game.push(move) 
-        print(move.uci())
+        # print(move.uci())
         count+=1
         fancyPrint = ui.Board(game)
         fancyPrint.pp()
@@ -56,7 +57,6 @@ def print_move_list(move_list, board):
     print()
 
 def white_input(fen):
-    
     move = requests.get(WHITE_BOT_URL,json={'fen':fen})
     chosen_move = move.json()['move']
     # game = ch.Board(fen)
@@ -69,17 +69,18 @@ def black_input(fen):
     return ch.Move.from_uci(chosen_move)
     # return chosen_move
 
+def random_input(fen):
+    return random.choice(list(ch.Board(fen).legal_moves))
+    
 def user_input(game) -> str:
     move = ch.Move.from_uci(input("Your Move:"))
     return move
 
 def main():
     autogame = True
-    b = black_input
-    w = white_input
-    x = gameLoop(autogame, black_move=b, white_move=w)
+    x = gameLoop(autogame, black_move=black_input, white_move=random_input)
     
-    print(x[0], {
+    return (x[0], {
         '0-1':'Blue', #black
         '1/2-1/2':'stalemate',
         '1-0':'Pink', # white
@@ -89,5 +90,10 @@ def main():
 
 
 if __name__ == '__main__':    
-    while True:
-        main()
+    i = 0
+    results = []
+    while i < 1:
+        results.append(main())
+        i+=1
+
+    pp(results)

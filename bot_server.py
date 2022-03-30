@@ -1,9 +1,18 @@
+"""
+Rusn a bot as a server, which receives fenstrings and returns a chosen move
+"""
 import random
-from time import sleep
-import chess
 import operator
+import chess
+import requests
+
 from flask import Flask, request
 app = Flask(__name__)
+
+################################################################################
+WHITE_BOT_URL = 'http://127.0.0.1:5000'
+BLACK_BOT_URL = 'http://127.0.0.1:5000'
+################################################################################
 
 class WeightedMove:
     """
@@ -28,9 +37,11 @@ async def bot():
     x = request.get_json()
     fen_string = x['fen']
     # print(c_board)
-    print()
-    print(chess.Board(fen_string))
-    move = mini_maxi(fen=fen_string, weights={'max_depth':0})
+    # print()
+    # print(chess.Board(fen_string))
+    resp = requests.get('http://127.0.0.1:5001', json={'fen':fen_string})
+    weights = resp.json()
+    move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
     while move.parent.parent is not None:
         move = move.parent
@@ -65,15 +76,18 @@ def min_max(weighted_move, weights, depth=0)-> WeightedMove:
 
     # Base Case
     if not next_boards:
-        return 1
+        weighted_move.weight = 100
+        return weighted_move
 
     # Apply weights to moves
     choices = [min_max(x, weights=weights, depth=depth+1) for x in next_boards]
     # Recurse
     if depth % 2 == 0:
-        return max(choices, key=operator.attrgetter('weight'))
+        best = max(choices, key=operator.attrgetter('weight')).weight
+        return random.choice(list(filter(lambda x: x.weight == best, choices)))
     if depth % 2 == 1:
-        return min(choices, key=operator.attrgetter('weight'))
+        worst = min(choices, key=operator.attrgetter('weight')).weight
+        return random.choice(list(filter(lambda x: x.weight == worst, choices)))
 
 def generate_positions(parent_move) -> WeightedMove:
     """
@@ -89,7 +103,8 @@ def generate_positions(parent_move) -> WeightedMove:
     next_boards = []
     for move in list(current_board.legal_moves):
         current_board.push(move)
-        next_boards.append(WeightedMove(fen=str(current_board.board_fen()),move=move,parent=parent_move))
+        next_boards.append(WeightedMove(fen=str(current_board.board_fen()),\
+            move=move,parent=parent_move))
         current_board.pop()
 
     return next_boards
@@ -102,12 +117,14 @@ def util_funciton(weighted_move, weights):
     judges the fen string based on the weights
     """
     weighted_move.weight = random.randint(0,100)
+    # weighted_move.weight = len(list(chess.Board(weighted_move.fen).legal_moves))
     return weighted_move
 
 if __name__=="__main__":
     app.run(threaded=True, port=5000)
-    # game = chess.Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-  
+    # NEW_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    # game = chess.Board(NEW_FEN)
+
     # move = mini_maxi(game.board_fen(),{'max_depth':3})
     # print()
     # print(move)
