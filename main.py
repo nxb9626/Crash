@@ -79,14 +79,14 @@ def random_input(fen):
     print("random's move")
     return random.choice(list(ch.Board(fen).legal_moves))
     
-def user_input(game) -> str:
+def user_input(fen) -> str:
     move = ch.Move.from_uci(input("Your Move:"))
     return move
 
 def main():
     autogame = True
     x = gameLoop(autogame, black_move=black_input, white_move=random_input)
-    
+
     return (x[0], {
         '0-1':'Pink', #black
         '1/2-1/2':'stalemate',

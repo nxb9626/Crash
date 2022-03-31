@@ -1,6 +1,7 @@
 """
 Rusn a bot as a server, which receives fenstrings and returns a chosen move
 """
+import math
 import random
 import operator
 import chess
@@ -51,7 +52,7 @@ async def bot():
     # x = len(move_list)
     # x = random.randint(0, len(move_list)-1)
     choice = move.move
-
+    print(move)
     return {'move':choice.uci()}
 
 def mini_maxi(fen,weights):
@@ -76,7 +77,10 @@ def min_max(weighted_move, weights, depth=0)-> WeightedMove:
 
     # Base Case
     if not next_boards:
-        weighted_move.weight = 100
+        if depth % 2 == 0:
+            weighted_move.weight = -100
+        else:
+            weighted_move.weight = 100
         return weighted_move
 
     # Apply weights to moves
@@ -89,7 +93,7 @@ def min_max(weighted_move, weights, depth=0)-> WeightedMove:
         worst = min(choices, key=operator.attrgetter('weight')).weight
         return random.choice(list(filter(lambda x: x.weight == worst, choices)))
 
-def generate_positions(parent_move) -> WeightedMove:
+def generate_positions(parent_move:WeightedMove) -> WeightedMove:
     """
     fen = fenstring of board position from which the new moves will move
 
@@ -109,22 +113,75 @@ def generate_positions(parent_move) -> WeightedMove:
 
     return next_boards
 
-def util_funciton(weighted_move, weights):
+def util_funciton(weighted_move:WeightedMove, weights:dict):
     """
     fen = fenstring of current board
     weights = weights being used to judge board
 
     judges the fen string based on the weights
     """
-    weighted_move.weight = random.randint(0,100)
-    # weighted_move.weight = len(list(chess.Board(weighted_move.fen).legal_moves))
+    board = chess.Board(weighted_move.fen)
+    # fen = weighted_move.fen
+    # board_string = fen.split(' ')[0]
+    # print(board.turn)
+    print(board.turn)
+    #measure current players piece score
+    k = len(list(board.pieces(chess.KING,board.turn))) * weights['king_weight'] * 20
+    q = len(list(board.pieces(chess.QUEEN,board.turn))) * weights['queen_weight'] * 9
+    r = len(list(board.pieces(chess.ROOK,board.turn))) * weights['rook_weight'] * 5
+    n = len(list(board.pieces(chess.KNIGHT,board.turn))) * weights['knight_weight'] * 3
+    b = len(list(board.pieces(chess.BISHOP,board.turn))) * weights['bishop_weight'] * 3
+    p = len(list(board.pieces(chess.PAWN,board.turn))) * weights['pawn_weight'] 
+    current_player_piece_value = p+r+n+q+b+k
+
+    K = len(list(board.pieces(chess.KING,not board.turn))) * weights['king_weight'] * 20
+    Q = len(list(board.pieces(chess.QUEEN,not board.turn))) * weights['queen_weight'] * 9
+    R = len(list(board.pieces(chess.ROOK,not board.turn))) * weights['rook_weight'] * 5
+    N = len(list(board.pieces(chess.KNIGHT,not board.turn))) * weights['knight_weight'] * 3
+    B = len(list(board.pieces(chess.BISHOP,not board.turn))) * weights['bishop_weight'] * 3
+    P = len(list(board.pieces(chess.PAWN,not board.turn))) * weights['pawn_weight']
+    opponent_player_piece_value = P+R+N+Q+B+K
+    print(list(board.move_stack))
+    if board.is_checkmate(): 
+        checkmate = math.inf
+    else: 
+        checkmate = 0
+    # print(board.turn, current_player_piece_value- opponent_player_piece_value)
+    # weights['king_weight']
+    # weighted_move.weight = random.randint(0,100)
+    
+    weighted_move.weight = (current_player_piece_value - opponent_player_piece_value) + checkmate
+    print(weighted_move)
     return weighted_move
 
 if __name__=="__main__":
     app.run(threaded=True, port=5000)
-    # NEW_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    # game = chess.Board(NEW_FEN)
-
+    NEW_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    fen = "r1b2Bk1/pp1p4/2p4p/8/8/3P4/PPP1PPPP/RN1QKB1R w KQkq - 0 1"
+    game = chess.Board(fen)
+    move = WeightedMove(game.fen(),chess.Move.from_uci("e2e4"),None)
+    print()
+    print(util_funciton(move, weights={
+        "max_depth":1,
+        "king_weight":1,
+        "queen_weight":1,
+        "rook_weight":1,
+        "bishop_weight":1,
+        "knight_weight":1,
+        "pawn_weight":1,
+        "pawn_structure_weight":1,
+        "space_weight":1,
+        "center_control":1,
+        "opponent_threats":1,
+        "piece_positions":{
+            "rook_depth - 7th best":1,
+            "bishops_on_diagonals":1,
+            "rook_in_open_columns":1
+        },
+        "checking_opponent":1,
+        "attacking_opponent":1
+    }
+    ))
     # move = mini_maxi(game.board_fen(),{'max_depth':3})
     # print()
     # print(move)
