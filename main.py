@@ -84,7 +84,7 @@ def random_input(fen,move):
     print("random's move")
     return random.choice(list(ch.Board(fen).legal_moves))
     
-def user_input(fen,move) -> str:
+def user_input(fen,move) -> ch.Move:
     move = ch.Move.from_uci(input("Your Move:"))
     return move
 
