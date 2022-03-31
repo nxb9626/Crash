@@ -16,10 +16,8 @@ async def bot():
     """
     x = request.get_json()
     fen_string = x['fen']
-    move_count = x['move_count']
     print(fen_string)
     return {
-        "move_count":move_count,
         "max_depth":1,
         "king_weight":1,
         "queen_weight":1,
