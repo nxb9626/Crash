@@ -6,7 +6,7 @@ import random
 import operator
 import chess
 import requests
-
+from adapt_server import adapt
 from flask import Flask, request
 app = Flask(__name__)
 
@@ -40,8 +40,12 @@ async def bot():
     # print(c_board)
     # print()
     # print(chess.Board(fen_string))
-    resp = requests.get('http://127.0.0.1:5001', json={'fen':fen_string})
-    weights = resp.json()
+    # m_c=x['move_count']
+    # resp = requests.get('http://127.0.0.1:5001', json=x
+        
+    #     # 'move_count':m_c
+    #     )
+    weights = adapt(x)# resp.json()
     move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
     while move.parent.parent is not None:
@@ -59,11 +63,12 @@ def mini_maxi(fen,weights):
     """
     wrapper function for the min_max algorithm, easier to call from api call
     """
-    next_boards = generate_positions(WeightedMove(fen,None,None))
-    return max([ min_max(x,weights=weights) for x in next_boards],
+    seen_boards = {fen}
+    next_boards = generate_positions(WeightedMove(fen,None,None),seen_boards=seen_boards)
+    return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
         key=operator.attrgetter('weight'))
 
-def min_max(weighted_move, weights, depth=0)-> WeightedMove:
+def min_max(weighted_move, weights, seen_boards:set,depth=0)-> WeightedMove:
     """
     fen = fenstring of current board position
     weights = weights being used to judge board
@@ -73,7 +78,7 @@ def min_max(weighted_move, weights, depth=0)-> WeightedMove:
     if depth==weights['max_depth']:
         return util_funciton(weighted_move, weights=weights)
 
-    next_boards = generate_positions(weighted_move)
+    next_boards = generate_positions(weighted_move,seen_boards=seen_boards)
 
     # Base Case
     if not next_boards:
@@ -84,16 +89,18 @@ def min_max(weighted_move, weights, depth=0)-> WeightedMove:
         return weighted_move
 
     # Apply weights to moves
-    choices = [min_max(x, weights=weights, depth=depth+1) for x in next_boards]
+    choices = [min_max(x, weights=weights,seen_boards=seen_boards, depth=depth+1) for x in next_boards]
     # Recurse
     if depth % 2 == 0:
-        best = max(choices, key=operator.attrgetter('weight')).weight
-        return random.choice(list(filter(lambda x: x.weight == best, choices)))
+        best = max(choices, key=operator.attrgetter('weight'))
+        print(best)
+        return best#max(list(filter(lambda x: x.weight == best, choices)))
     if depth % 2 == 1:
-        worst = min(choices, key=operator.attrgetter('weight')).weight
-        return random.choice(list(filter(lambda x: x.weight == worst, choices)))
+        worst = min(choices, key=operator.attrgetter('weight'))
+        print(worst)
+        return worst#max(list(filter(lambda x: x.weight == worst, choices)))
 
-def generate_positions(parent_move:WeightedMove) -> WeightedMove:
+def generate_positions(parent_move: WeightedMove, seen_boards:set) -> WeightedMove:
     """
     fen = fenstring of board position from which the new moves will move
 
@@ -107,9 +114,16 @@ def generate_positions(parent_move:WeightedMove) -> WeightedMove:
     next_boards = []
     for move in list(current_board.legal_moves):
         current_board.push(move)
-        next_boards.append(WeightedMove(fen=str(current_board.board_fen()),\
-            move=move,parent=parent_move))
+        fen = current_board.fen()
         current_board.pop()
+
+        if fen in seen_boards:    
+            continue
+        else:
+            seen_boards.add(fen)
+            next_boards.append(WeightedMove(fen=str(fen),\
+            move=move,parent=parent_move))
+            
 
     return next_boards
 
@@ -124,7 +138,8 @@ def util_funciton(weighted_move:WeightedMove, weights:dict):
     # fen = weighted_move.fen
     # board_string = fen.split(' ')[0]
     # print(board.turn)
-    print(board.turn)
+    # print(weighted_move.fen)
+    # print(board.fen())
     #measure current players piece score
     k = len(list(board.pieces(chess.KING,board.turn))) * weights['king_weight'] * 20
     q = len(list(board.pieces(chess.QUEEN,board.turn))) * weights['queen_weight'] * 9
@@ -134,14 +149,14 @@ def util_funciton(weighted_move:WeightedMove, weights:dict):
     p = len(list(board.pieces(chess.PAWN,board.turn))) * weights['pawn_weight'] 
     current_player_piece_value = p+r+n+q+b+k
 
-    K = len(list(board.pieces(chess.KING,not board.turn))) * weights['king_weight'] * 20
-    Q = len(list(board.pieces(chess.QUEEN,not board.turn))) * weights['queen_weight'] * 9
-    R = len(list(board.pieces(chess.ROOK,not board.turn))) * weights['rook_weight'] * 5
-    N = len(list(board.pieces(chess.KNIGHT,not board.turn))) * weights['knight_weight'] * 3
-    B = len(list(board.pieces(chess.BISHOP,not board.turn))) * weights['bishop_weight'] * 3
-    P = len(list(board.pieces(chess.PAWN,not board.turn))) * weights['pawn_weight']
+    K = len(list(board.pieces(chess.KING, not board.turn))) * weights['king_weight'] * 20
+    Q = len(list(board.pieces(chess.QUEEN, not board.turn))) * weights['queen_weight'] * 9
+    R = len(list(board.pieces(chess.ROOK, not board.turn))) * weights['rook_weight'] * 5
+    N = len(list(board.pieces(chess.KNIGHT, not board.turn))) * weights['knight_weight'] * 3
+    B = len(list(board.pieces(chess.BISHOP, not board.turn))) * weights['bishop_weight'] * 3
+    P = len(list(board.pieces(chess.PAWN, not board.turn))) * weights['pawn_weight']
     opponent_player_piece_value = P+R+N+Q+B+K
-    print(list(board.move_stack))
+
     if board.is_checkmate(): 
         checkmate = math.inf
     else: 
@@ -151,18 +166,18 @@ def util_funciton(weighted_move:WeightedMove, weights:dict):
     # weighted_move.weight = random.randint(0,100)
     
     weighted_move.weight = (current_player_piece_value - opponent_player_piece_value) + checkmate
-    print(weighted_move)
+    # print(weighted_move)
     return weighted_move
 
 if __name__=="__main__":
     app.run(threaded=True, port=5000)
-    NEW_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    fen = "r1b2Bk1/pp1p4/2p4p/8/8/3P4/PPP1PPPP/RN1QKB1R w KQkq - 0 1"
+    fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    # fen = "r1b2Bk1/pp1p4/2p4p/8/8/3P4/PPP1PPPP/RN1QKB1R w KQkq - 0 1"
     game = chess.Board(fen)
-    move = WeightedMove(game.fen(),chess.Move.from_uci("e2e4"),None)
-    print()
-    print(util_funciton(move, weights={
-        "max_depth":1,
+    # move = WeightedMove(game.fen(),chess.Move.from_uci("e2e4"),None)
+    # print()
+    weights={
+        "max_depth":0,
         "king_weight":1,
         "queen_weight":1,
         "rook_weight":1,
@@ -181,8 +196,10 @@ if __name__=="__main__":
         "checking_opponent":1,
         "attacking_opponent":1
     }
-    ))
-    # move = mini_maxi(game.board_fen(),{'max_depth':3})
+    # ))
+    move = mini_maxi(game.board_fen(),weights)
+    game.push(move.move)
+    print(move)
     # print()
     # print(move)
     # while move.parent.parent is not None:
