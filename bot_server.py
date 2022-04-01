@@ -2,10 +2,12 @@
 Rusn a bot as a server, which receives fenstrings and returns a chosen move
 """
 import math
-import random
 import operator
+from pprint import pp
 import chess
-import requests
+import multiprocessing
+from functools import partial
+# import requests
 from adapt_server import adapt
 from flask import Flask, request
 app = Flask(__name__)
@@ -42,7 +44,7 @@ async def bot():
     # print(chess.Board(fen_string))
     # m_c=x['move_count']
     # resp = requests.get('http://127.0.0.1:5001', json=x
-        
+
     #     # 'move_count':m_c
     #     )
     weights = adapt(x)# resp.json()
@@ -65,8 +67,12 @@ def mini_maxi(fen,weights):
     """
     seen_boards = {fen}
     next_boards = generate_positions(WeightedMove(fen,None,None),seen_boards=seen_boards)
-    return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
-        key=operator.attrgetter('weight'))
+    pool = multiprocessing.Pool(processes=4)
+    judged = pool.map(partial(min_max,weights=weights,seen_boards=seen_boards),next_boards)
+    # return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
+        # key=operator.attrgetter('weight'))
+    pp(judged)
+    return(max(judged,key=operator.attrgetter('weight')))
 
 def min_max(weighted_move, weights, seen_boards:set,depth=0)-> WeightedMove:
     """
@@ -157,7 +163,7 @@ def util_funciton(weighted_move:WeightedMove, weights:dict):
     P = len(list(board.pieces(chess.PAWN, not board.turn))) * weights['pawn_weight']
     opponent_player_piece_value = P+R+N+Q+B+K
 
-    if board.is_checkmate(): 
+    if board.is_checkmate():
         checkmate = math.inf
     else: 
         checkmate = 0
