@@ -89,9 +89,9 @@ def min_max(weighted_move, weights, seen_boards:set,depth=0)-> WeightedMove:
     # Base Case
     if not next_boards:
         if depth % 2 == 0:
-            weighted_move.weight = -100
+            weighted_move.weight = math.inf
         else:
-            weighted_move.weight = 100
+            weighted_move.weight = -math.inf
         return weighted_move
 
     # Apply weights to moves
