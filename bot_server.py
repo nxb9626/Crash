@@ -7,7 +7,6 @@ from pprint import pp
 import chess
 import multiprocessing
 from functools import partial
-# import requests
 from adapt_server import adapt
 from flask import Flask, request
 app = Flask(__name__)
@@ -39,7 +38,7 @@ async def bot():
     """
     x = request.get_json()
     fen_string = x['fen']
-  
+    print(fen_string)
     weights = adapt(x)# resp.json()
     move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
@@ -50,59 +49,62 @@ async def bot():
     print(move)
     return {'move':choice.uci()}
 
-def mini_maxi(fen,weights):
+def mini_maxi(fen, weights):
     """
     wrapper function for the min_max algorithm, easier to call from api call
     """
-    seen_boards = {fen}
+    seen_boards = [fen]
     next_boards = generate_positions(WeightedMove(fen,None,None),seen_boards=seen_boards)
-    # pool = multiprocessing.Pool(processes=4)
-    # judged = pool.map(partial(min_max,weights=weights,seen_boards=seen_boards),next_boards)
-   
-    # pp(judged)
-    # return(max(judged,key=operator.attrgetter('weight')))
-    return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
-        key=operator.attrgetter('weight'))
+    pool = multiprocessing.Pool(processes=4)
+    judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
 
-def min_max(current_move=None, weights={}, seen_boards:set={}, depth=0)-> WeightedMove:
+    # print(judged)
+    return(max(judged,key=operator.attrgetter('weight')))
+    # return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
+        # key=operator.attrgetter('weight'))
+
+def min_max(current_move=None, weights={}, seen_boards=[], depth=0)-> WeightedMove:
     """
     fen = fenstring of current board position
     weights = weights being used to judge board
     depth = current depth in search, starts at 0
     """
-    
+
     current_board = chess.Board(fen=current_move.fen)
     # Final depth case
-    if depth==weights['max_depth'] or not list(current_board.legal_moves):
+    if depth==weights['max_depth']:
         return util_funciton(current_move, depth, weights=weights)
 
     next_boards = []
-    for move in list(current_board.legal_moves):
-        current_board.push(move)
+    potential_next_moves = list(current_board.legal_moves)
+    if len(potential_next_moves) == 0:
+        return util_funciton(current_move, depth, weights=weights)
+    for m in potential_next_moves:
+        current_board.push(m)
         fen = current_board.fen()
         current_board.pop()
 
-        if fen in seen_boards:    
+        if fen in seen_boards: 
             continue
         else:
-            seen_boards.add(fen)
-            wm = WeightedMove(fen=str(fen),move=move,parent=current_move)
-            min_max(wm, weights=weights,seen_boards=seen_boards, depth=depth+1)
-
-
+            seen_boards.append(fen)
+            wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
+            # Recurse to get weights correctly set
+            min_max(current_move=wm,weights=weights,depth=depth+1)
+            next_boards.append(wm)
     # Apply weights to moves
     # choices = [ for x in next_boards]
-    # Recurse
+    
     if depth % 2 == 0:
         best = max(next_boards, key=operator.attrgetter('weight'))
-        print(best)
-        return best#max(list(filter(lambda x: x.weight == best, choices)))
+        # print(best)
+        return best
     if depth % 2 == 1:
         worst = min(next_boards, key=operator.attrgetter('weight'))
-        print(worst)
-        return worst#max(list(filter(lambda x: x.weight == worst, choices)))
+        # print(worst)
+        return worst
 
-def generate_positions(current_move: WeightedMove, seen_boards:set) -> WeightedMove:
+def generate_positions(current_move: WeightedMove, seen_boards:list) -> WeightedMove:
     """
     fen = fenstring of board position from which the new moves will move
 
@@ -122,9 +124,9 @@ def generate_positions(current_move: WeightedMove, seen_boards:set) -> WeightedM
         if fen in seen_boards:    
             continue
         else:
-            seen_boards.add(fen)
+            seen_boards.append(fen)
             next_boards.append(WeightedMove(fen=str(fen),\
-            move=move,parent=current_move))
+                move=move,parent=current_move))
             
 
     return next_boards
@@ -184,12 +186,14 @@ def util_funciton(current_move:WeightedMove,depth, weights:dict):
 if __name__=="__main__":
     app.run(threaded=True, port=5000)
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    fen_3="8/1Kn1p3/1p5N/4p1q1/4k1N1/3R2p1/Qn2B3/7R w - - 0 1"
+    fen_1="8/2K1p3/1p5N/4p1q1/4k1N1/3n2p1/Q3B3/7R w - - 0 2"
     # fen = "r1b2Bk1/pp1p4/2p4p/8/8/3P4/PPP1PPPP/RN1QKB1R w KQkq - 0 1"
-    game = chess.Board(fen)
+    game = chess.Board(fen_3)
     # move = WeightedMove(game.fen(),chess.Move.from_uci("e2e4"),None)
     # print()
     weights={
-        "max_depth":0,
+        "max_depth":2,
         "king_weight":1,
         "queen_weight":1,
         "rook_weight":1,
