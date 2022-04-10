@@ -78,8 +78,7 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0)-> Wei
 
     next_boards = []
     potential_next_moves = list(current_board.legal_moves)
-    if len(potential_next_moves) == 0:
-        return util_funciton(current_move, depth, weights=weights)
+
     for m in potential_next_moves:
         current_board.push(m)
         fen = current_board.fen()
@@ -94,17 +93,16 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0)-> Wei
             min_max(current_move=wm,weights=weights,depth=depth+1)
             next_boards.append(wm)
     # Apply weights to moves
-    # choices = [ for x in next_boards]
+
     if len(next_boards) == 0:
         return util_funciton(current_move, depth, weights=weights)
    
     if depth % 2 == 0:
         best = max(next_boards, key=operator.attrgetter('weight'))
-        # print(best)
         return best
+
     if depth % 2 == 1:
         worst = min(next_boards, key=operator.attrgetter('weight'))
-        # print(worst)
         return worst
 
 def generate_positions(current_move: WeightedMove, seen_boards:set)->WeightedMove:
