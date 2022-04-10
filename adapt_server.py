@@ -23,7 +23,7 @@ def adapt(request):
     # print(moves)
     # print(fen_string)
     return {
-        "max_depth":2,
+        "max_depth":3,
         "king_weight":1,
         "queen_weight":1,
         "rook_weight":1,

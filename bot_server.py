@@ -39,24 +39,13 @@ async def bot():
     """
     x = request.get_json()
     fen_string = x['fen']
-    # print(c_board)
-    # print()
-    # print(chess.Board(fen_string))
-    # m_c=x['move_count']
-    # resp = requests.get('http://127.0.0.1:5001', json=x
-
-    #     # 'move_count':m_c
-    #     )
+  
     weights = adapt(x)# resp.json()
     move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
     while move.parent.parent is not None:
         move = move.parent
-    # move_list = list(c_board.legal_moves)
-    # print_move_list(move_list=move_list, board=c_board)
 
-    # x = len(move_list)
-    # x = random.randint(0, len(move_list)-1)
     choice = move.move
     print(move)
     return {'move':choice.uci()}
@@ -67,53 +56,60 @@ def mini_maxi(fen,weights):
     """
     seen_boards = {fen}
     next_boards = generate_positions(WeightedMove(fen,None,None),seen_boards=seen_boards)
-    pool = multiprocessing.Pool(processes=4)
-    judged = pool.map(partial(min_max,weights=weights,seen_boards=seen_boards),next_boards)
-    # return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
-        # key=operator.attrgetter('weight'))
-    pp(judged)
-    return(max(judged,key=operator.attrgetter('weight')))
+    # pool = multiprocessing.Pool(processes=4)
+    # judged = pool.map(partial(min_max,weights=weights,seen_boards=seen_boards),next_boards)
+   
+    # pp(judged)
+    # return(max(judged,key=operator.attrgetter('weight')))
+    return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
+        key=operator.attrgetter('weight'))
 
-def min_max(weighted_move, weights, seen_boards:set,depth=0)-> WeightedMove:
+def min_max(current_move=None, weights={}, seen_boards:set={}, depth=0)-> WeightedMove:
     """
     fen = fenstring of current board position
     weights = weights being used to judge board
     depth = current depth in search, starts at 0
     """
+    
+    current_board = chess.Board(fen=current_move.fen)
     # Final depth case
-    if depth==weights['max_depth']:
-        return util_funciton(weighted_move, weights=weights)
+    if depth==weights['max_depth'] or not list(current_board.legal_moves):
+        return util_funciton(current_move, depth, weights=weights)
 
-    next_boards = generate_positions(weighted_move,seen_boards=seen_boards)
+    next_boards = []
+    for move in list(current_board.legal_moves):
+        current_board.push(move)
+        fen = current_board.fen()
+        current_board.pop()
 
-    # Base Case
-    if not next_boards:
-        if depth % 2 == 0:
-            weighted_move.weight = math.inf
+        if fen in seen_boards:    
+            continue
         else:
-            weighted_move.weight = -math.inf
-        return weighted_move
+            seen_boards.add(fen)
+            wm = WeightedMove(fen=str(fen),move=move,parent=current_move)
+            min_max(wm, weights=weights,seen_boards=seen_boards, depth=depth+1)
+
 
     # Apply weights to moves
-    choices = [min_max(x, weights=weights,seen_boards=seen_boards, depth=depth+1) for x in next_boards]
+    # choices = [ for x in next_boards]
     # Recurse
     if depth % 2 == 0:
-        best = max(choices, key=operator.attrgetter('weight'))
+        best = max(next_boards, key=operator.attrgetter('weight'))
         print(best)
         return best#max(list(filter(lambda x: x.weight == best, choices)))
     if depth % 2 == 1:
-        worst = min(choices, key=operator.attrgetter('weight'))
+        worst = min(next_boards, key=operator.attrgetter('weight'))
         print(worst)
         return worst#max(list(filter(lambda x: x.weight == worst, choices)))
 
-def generate_positions(parent_move: WeightedMove, seen_boards:set) -> WeightedMove:
+def generate_positions(current_move: WeightedMove, seen_boards:set) -> WeightedMove:
     """
     fen = fenstring of board position from which the new moves will move
 
     Generates new moves, which by default are unweighted
     """
 
-    current_board = chess.Board(fen=parent_move.fen)
+    current_board = chess.Board(fen=current_move.fen)
     # print(current_board)
     if current_board.is_game_over():
         return []
@@ -128,23 +124,33 @@ def generate_positions(parent_move: WeightedMove, seen_boards:set) -> WeightedMo
         else:
             seen_boards.add(fen)
             next_boards.append(WeightedMove(fen=str(fen),\
-            move=move,parent=parent_move))
+            move=move,parent=current_move))
             
 
     return next_boards
 
-def util_funciton(weighted_move:WeightedMove, weights:dict):
+def util_funciton(current_move:WeightedMove,depth, weights:dict):
     """
     fen = fenstring of current board
     weights = weights being used to judge board
 
     judges the fen string based on the weights
     """
-    board = chess.Board(weighted_move.fen)
-    # fen = weighted_move.fen
+    board = chess.Board(current_move.fen)
+
+    
+    # Base Case
+    if not list(board.legal_moves):
+        if depth % 2 == 0:
+            current_move.weight = math.inf
+        else:
+            current_move.weight = -math.inf
+        return current_move
+
+    # fen = current_move.fen
     # board_string = fen.split(' ')[0]
     # print(board.turn)
-    # print(weighted_move.fen)
+    # print(current_move.fen)
     # print(board.fen())
     #measure current players piece score
     k = len(list(board.pieces(chess.KING,board.turn))) * weights['king_weight'] * 20
@@ -169,11 +175,11 @@ def util_funciton(weighted_move:WeightedMove, weights:dict):
         checkmate = 0
     # print(board.turn, current_player_piece_value- opponent_player_piece_value)
     # weights['king_weight']
-    # weighted_move.weight = random.randint(0,100)
+    # current_move.weight = random.randint(0,100)
     
-    weighted_move.weight = (current_player_piece_value - opponent_player_piece_value) + checkmate
-    # print(weighted_move)
-    return weighted_move
+    current_move.weight = (current_player_piece_value - opponent_player_piece_value) + checkmate
+    # print(current_move)
+    return current_move
 
 if __name__=="__main__":
     app.run(threaded=True, port=5000)
