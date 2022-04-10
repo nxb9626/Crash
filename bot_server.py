@@ -53,9 +53,10 @@ def mini_maxi(fen, weights):
     """
     wrapper function for the min_max algorithm, easier to call from api call
     """
-    seen_boards = [fen]
+    seen_boards = set()
+    seen_boards.add(fen)
     next_boards = generate_positions(WeightedMove(fen,None,None),seen_boards=seen_boards)
-    pool = multiprocessing.Pool(processes=4)
+    pool = multiprocessing.Pool(processes=12)
     judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
 
     # print(judged)
@@ -63,7 +64,7 @@ def mini_maxi(fen, weights):
     # return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
         # key=operator.attrgetter('weight'))
 
-def min_max(current_move=None, weights={}, seen_boards=[], depth=0)-> WeightedMove:
+def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0)-> WeightedMove:
     """
     fen = fenstring of current board position
     weights = weights being used to judge board
@@ -87,7 +88,7 @@ def min_max(current_move=None, weights={}, seen_boards=[], depth=0)-> WeightedMo
         if fen in seen_boards: 
             continue
         else:
-            seen_boards.append(fen)
+            seen_boards.add(fen)
             wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
             # Recurse to get weights correctly set
             min_max(current_move=wm,weights=weights,depth=depth+1)
@@ -106,7 +107,7 @@ def min_max(current_move=None, weights={}, seen_boards=[], depth=0)-> WeightedMo
         # print(worst)
         return worst
 
-def generate_positions(current_move: WeightedMove, seen_boards:list)->WeightedMove:
+def generate_positions(current_move: WeightedMove, seen_boards:set)->WeightedMove:
     """
     fen = fenstring of board position from which the new moves will move
 
@@ -126,7 +127,7 @@ def generate_positions(current_move: WeightedMove, seen_boards:list)->WeightedMo
         if fen in seen_boards:    
             continue
         else:
-            seen_boards.append(fen)
+            seen_boards.add(fen)
             next_boards.append(WeightedMove(fen=str(fen),\
                 move=move,parent=current_move))
             
