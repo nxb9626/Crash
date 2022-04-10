@@ -94,7 +94,9 @@ def min_max(current_move=None, weights={}, seen_boards=[], depth=0)-> WeightedMo
             next_boards.append(wm)
     # Apply weights to moves
     # choices = [ for x in next_boards]
-    
+    if len(next_boards) == 0:
+        return util_funciton(current_move, depth, weights=weights)
+   
     if depth % 2 == 0:
         best = max(next_boards, key=operator.attrgetter('weight'))
         # print(best)
@@ -104,7 +106,7 @@ def min_max(current_move=None, weights={}, seen_boards=[], depth=0)-> WeightedMo
         # print(worst)
         return worst
 
-def generate_positions(current_move: WeightedMove, seen_boards:list) -> WeightedMove:
+def generate_positions(current_move: WeightedMove, seen_boards:list)->WeightedMove:
     """
     fen = fenstring of board position from which the new moves will move
 
@@ -131,7 +133,7 @@ def generate_positions(current_move: WeightedMove, seen_boards:list) -> Weighted
 
     return next_boards
 
-def util_funciton(current_move:WeightedMove,depth, weights:dict):
+def util_funciton(current_move:WeightedMove,depth, weights:dict)->WeightedMove:
     """
     fen = fenstring of current board
     weights = weights being used to judge board
