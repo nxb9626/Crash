@@ -20,10 +20,11 @@ def adapt(request):
     move = x['move']
     global moves
     moves.append(move)
+    print(moves)
     # print(moves)
     # print(fen_string)
     return {
-        "max_depth":2,
+        "max_depth":5,
         "king_weight":1,
         "queen_weight":1,
         "rook_weight":1,
