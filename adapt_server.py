@@ -4,7 +4,7 @@ changes should be made for its decision making
 """
 import pickle
 import chess
-
+import math
 # from flask import Flask, request
 # app = Flask(__name__)
 
@@ -18,13 +18,31 @@ def adapt(request):
     x = request#.get_json()
     fen_string = x['fen']
     move = x['move']
-    global moves
     moves.append(move)
-    print(moves)
+    board = chess.Board(fen_string)
+    k = len(list(board.pieces(chess.KING,board.turn))) 
+    q = len(list(board.pieces(chess.QUEEN,board.turn)))
+    r = len(list(board.pieces(chess.ROOK,board.turn))) 
+    n = len(list(board.pieces(chess.KNIGHT,board.turn)))
+    b = len(list(board.pieces(chess.BISHOP,board.turn)))
+    p = len(list(board.pieces(chess.PAWN,board.turn)))
+
+    K = len(list(board.pieces(chess.KING, not board.turn))) 
+    Q = len(list(board.pieces(chess.QUEEN, not board.turn)))
+    R = len(list(board.pieces(chess.ROOK, not board.turn))) 
+    N = len(list(board.pieces(chess.KNIGHT, not board.turn)))
+    B = len(list(board.pieces(chess.BISHOP, not board.turn)))
+    P = len(list(board.pieces(chess.PAWN, not board.turn)))
+    board_piece_count = p+r+n+q+b+k+P+R+N+Q+B+K
+
+    max_depth = math.ceil(6*(44-board_piece_count)/32)
+
+    print("MAX_DEPTH",max_depth)
+    #adapt to detpth
     # print(moves)
     # print(fen_string)
     return {
-        "max_depth":6,
+        "max_depth":max_depth,
         "king_weight":1,
         "queen_weight":1,
         "rook_weight":1,
