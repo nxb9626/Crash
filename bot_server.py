@@ -60,7 +60,7 @@ def mini_maxi(fen, weights):
     pool = multiprocessing.Pool(processes=12)
     judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
 
-    print(judged)
+    # print(judged)
     return(max(judged,key=operator.attrgetter('weight')))
     # return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
         # key=operator.attrgetter('weight'))
