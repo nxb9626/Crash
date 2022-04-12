@@ -34,9 +34,9 @@ def adapt(request):
     B = len(list(board.pieces(chess.BISHOP, not board.turn)))
     P = len(list(board.pieces(chess.PAWN, not board.turn)))
     board_piece_count = p+r+n+q+b+k+P+R+N+Q+B+K
-
-    max_depth = math.ceil(6*(44-board_piece_count)/32)
-
+    # print(board_piece_count)
+    # max_depth = math.ceil(6*(44-board_piece_count)/32)
+    max_depth = math.ceil((16/(board_piece_count))+2)
     print("MAX_DEPTH",max_depth)
     #adapt to detpth
     # print(moves)

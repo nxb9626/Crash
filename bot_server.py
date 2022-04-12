@@ -3,13 +3,14 @@ Rusn a bot as a server, which receives fenstrings and returns a chosen move
 """
 import math
 import operator
-from pprint import pp
 import chess
 import multiprocessing
 from functools import partial
 from adapt_server import adapt
 import random
+from analysis import util_funciton 
 from flask import Flask, request
+from weighted import WeightedMove
 app = Flask(__name__)
 
 ################################################################################
@@ -17,19 +18,6 @@ WHITE_BOT_URL = 'http://127.0.0.1:5000'
 BLACK_BOT_URL = 'http://127.0.0.1:5000'
 ################################################################################
 
-class WeightedMove:
-    """
-    class representing a board and move so that it can be sorted
-    """
-    def __init__(self,fen,move,parent=None,weight=0):
-        self.fen = fen
-        self.move = move
-        self.weight = weight
-        self.parent=parent
-
-
-    def __repr__(self) -> str:
-        return self.fen+'\n'+self.move.uci()+'\n'+str(self.weight)
 @app.route("/")
 async def bot():
     """
@@ -42,9 +30,7 @@ async def bot():
     weights = adapt(x)# resp.json()
     move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
-    while move.parent.parent is not None:
-        move = move.parent
-
+  
     choice = move.move
     # print(move)
     return {'move':choice.uci()}
@@ -61,12 +47,18 @@ def mini_maxi(fen, weights):
     judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
 
     # print(judged)
-    max_weight = max(judged,key=operator.attrgetter('weight')).weight 
+    max_weight = min(judged,key=operator.attrgetter('weight')).weight 
     best_choices = [x for x in judged if x.weight == max_weight]
     # print("JUDGED: ",judged)
     print("WEIGHT:", max_weight)
-    # print("CHOSEN: ",best_choices)
-    return(random.choice(best_choices))
+    # print("ALL_CHOICES: ",judged)
+    # print("BEST_CHOICES: ",best_choices)
+    choice = random.choice(best_choices)
+    
+    while choice.parent.parent is not None:
+        choice = choice.parent
+
+    return(choice)
     # return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
         # key=operator.attrgetter('weight'))
 
@@ -87,8 +79,7 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
     potential_next_moves = list(current_board.legal_moves)
     #max player
     if depth % 2 == 0:
-        best = WeightedMove("",move=None)
-        best.weight = -math.inf
+        best = WeightedMove("",move=None,weight=-math.inf)
         for m in potential_next_moves:
             current_board.push(m)
             fen = current_board.fen()
@@ -100,7 +91,7 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
                 seen_boards.add(fen)
 
                 wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
-                min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta)
+                setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
                 best = max([best,wm], key=operator.attrgetter('weight'))                
                 alpha = max([alpha,best], key=operator.attrgetter('weight'))
                 next_boards.append(wm)
@@ -114,9 +105,7 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
 
     #min player
     else:
-        best = WeightedMove("",move=None)
-        best.weight = math.inf
-
+        best = WeightedMove("",move=None,weight=math.inf)
         for m in potential_next_moves:
             current_board.push(m)
             fen = current_board.fen()
@@ -128,9 +117,9 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
                 seen_boards.add(fen)
                 wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
                 # Recurse to get weights correctly set
-                min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta)
+                setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
                 best = min([best,wm], key=operator.attrgetter('weight'))                
-                beta = min([alpha,best], key=operator.attrgetter('weight'))
+                beta = min([beta,best], key=operator.attrgetter('weight'))
                 next_boards.append(wm)
                 if beta.weight <= alpha.weight:
                     break
@@ -165,57 +154,6 @@ def generate_positions(current_move: WeightedMove, seen_boards:set)->WeightedMov
                 move=move,parent=current_move))
     return next_boards
 
-def util_funciton(current_move:WeightedMove,depth, weights:dict)->WeightedMove:
-    """
-    fen = fenstring of current board
-    weights = weights being used to judge board
-
-    judges the fen string based on the weights
-    """
-    board = chess.Board(current_move.fen)
-
-    
-    # Base Case
-    # if not list(board.legal_moves):
-    #     if depth % 2 == 0:
-    #         current_move.weight = 1000
-    #     else:
-    #         current_move.weight = -1000
-    #     return current_move
-
-    # fen = current_move.fen
-    # board_string = fen.split(' ')[0]
-    # print(board.turn)
-    # print(current_move.fen)
-    # print(board.fen())
-    #measure current players piece score
-    k = len(list(board.pieces(chess.KING,board.turn))) * weights['king_weight'] * 20
-    q = len(list(board.pieces(chess.QUEEN,board.turn))) * weights['queen_weight'] * 9
-    r = len(list(board.pieces(chess.ROOK,board.turn))) * weights['rook_weight'] * 5
-    n = len(list(board.pieces(chess.KNIGHT,board.turn))) * weights['knight_weight'] * 3
-    b = len(list(board.pieces(chess.BISHOP,board.turn))) * weights['bishop_weight'] * 3
-    p = len(list(board.pieces(chess.PAWN,board.turn))) * weights['pawn_weight'] 
-    current_player_piece_value = p+r+n+q+b+k
-    
-    K = len(list(board.pieces(chess.KING, not board.turn))) * weights['king_weight'] * 20
-    Q = len(list(board.pieces(chess.QUEEN, not board.turn))) * weights['queen_weight'] * 9
-    R = len(list(board.pieces(chess.ROOK, not board.turn))) * weights['rook_weight'] * 5
-    N = len(list(board.pieces(chess.KNIGHT, not board.turn))) * weights['knight_weight'] * 3
-    B = len(list(board.pieces(chess.BISHOP, not board.turn))) * weights['bishop_weight'] * 3
-    P = len(list(board.pieces(chess.PAWN, not board.turn))) * weights['pawn_weight']
-    opponent_player_piece_value = P+R+N+Q+B+K
-
-    if board.is_checkmate():
-        checkmate = 1000
-    else: 
-        checkmate = 0
-    # print(board.turn, current_player_piece_value- opponent_player_piece_value)
-    # weights['king_weight']
-    # current_move.weight = random.randint(0,100)
-    
-    current_move.weight = (current_player_piece_value - opponent_player_piece_value) + checkmate
-    # print(current_move)
-    return current_move
 
 if __name__=="__main__":
     app.run(threaded=True, port=5000)
