@@ -19,12 +19,12 @@ BLACK_BOT_URL = 'http://127.0.0.1:5000'
 ################################################################################
 
 @app.route("/")
-async def bot():
+def bot(request):
     """
     responds to a get request with json
     with the next move to be made by the bot
     """
-    x = request.get_json()
+    x = request#.get_json()
     fen_string = x['fen']
     # print(fen_string)
     weights = adapt(x)# resp.json()
@@ -43,14 +43,16 @@ def mini_maxi(fen, weights):
     seen_boards = set()
     seen_boards.add(fen)
     next_boards = generate_positions(WeightedMove(fen,None,None),seen_boards=seen_boards)
-    pool = multiprocessing.Pool(processes=12)
-    judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
-
+    # pool = multiprocessing.Pool(processes=12)
+    # judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
+    judged = []
+    for board in next_boards:
+        judged.append(min_max(board,weights=weights))
     # print(judged)
-    max_weight = min(judged,key=operator.attrgetter('weight')).weight 
+    max_weight = max(judged,key=operator.attrgetter('weight')).weight 
     best_choices = [x for x in judged if x.weight == max_weight]
     # print("JUDGED: ",judged)
-    print("WEIGHT:", max_weight)
+    # print("WEIGHT:", max_weight)
     # print("ALL_CHOICES: ",judged)
     # print("BEST_CHOICES: ",best_choices)
     choice = random.choice(best_choices)
@@ -84,22 +86,20 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
             current_board.push(m)
             fen = current_board.fen()
             current_board.pop()
-            if fen in seen_boards:
-                continue
+            
+            seen_boards.add(fen)
 
-            else:
-                seen_boards.add(fen)
-
-                wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
-                setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
-                best = max([best,wm], key=operator.attrgetter('weight'))                
-                alpha = max([alpha,best], key=operator.attrgetter('weight'))
-                next_boards.append(wm)
-                
-                if beta.weight <= alpha.weight:
-                    break
-        if len(next_boards) == 0:
-            return util_funciton(current_move, depth, weights=weights)
+            wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
+            setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
+            best = max([best,wm], key=operator.attrgetter('weight'))                
+            alpha = max([alpha,best], key=operator.attrgetter('weight'))
+            next_boards.append(wm)
+            
+            if beta.weight <= alpha.weight:
+                break
+        # if len(next_boards) == 0:
+        #     print("nomore")
+        #     return util_funciton(current_move, depth, weights=weights)
         
         return best
 
@@ -111,21 +111,18 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
             fen = current_board.fen()
             current_board.pop()
             
-            if fen in seen_boards: 
-                continue
-            else:
-                seen_boards.add(fen)
-                wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
-                # Recurse to get weights correctly set
-                setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
-                best = min([best,wm], key=operator.attrgetter('weight'))                
-                beta = min([beta,best], key=operator.attrgetter('weight'))
-                next_boards.append(wm)
-                if beta.weight <= alpha.weight:
-                    break
+            seen_boards.add(fen)
+            wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
+            # Recurse to get weights correctly set
+            setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
+            best = min([best,wm], key=operator.attrgetter('weight'))                
+            beta = min([beta,best], key=operator.attrgetter('weight'))
+            next_boards.append(wm)
+            if beta.weight <= alpha.weight:
+                break
 
-        if len(next_boards) == 0:
-            return util_funciton(current_move, depth, weights=weights)
+        # if len(next_boards) == 0:
+        #     return util_funciton(current_move, depth, weights=weights)
    
         return best
 

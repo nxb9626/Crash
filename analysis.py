@@ -1,5 +1,6 @@
 import chess
 from weighted import WeightedMove
+seen_boards = []
 def util_funciton(current_move:WeightedMove,depth, weights:dict)->WeightedMove:
     """
     fen = fenstring of current board
@@ -7,23 +8,35 @@ def util_funciton(current_move:WeightedMove,depth, weights:dict)->WeightedMove:
 
     judges the fen string based on the weights
     """
-    board = chess.Board(current_move.fen)    
+    board = chess.Board(current_move.fen)
+    # print(board,'\n')    
+    game_state = 0
     if board.is_checkmate():
-        checkmate = 1000
+        game_state += 1000
     elif board.is_check():
-        checkmate = 100
+        game_state += 100
+    elif board.is_stalemate():
+        game_state += -5000
     else: 
-        checkmate = 0
+        game_state = 0
+    
+    alread_seen_board = 0
+    if current_move.fen in seen_boards:
+        alread_seen_board += -5
+        seen_boards.append(current_move.fen)
+    
+    board_score = sum(get_current_player_piece_scores(board,weights)) + game_state
+        # get_king_spaces(board),
+        # -1*sum(get_opponent_piece_scores(board,weights)),
+        # }
+    # ) 
+    # if depth % 2 == 0:
+        # board_score = -1*board_score
+    # if depth != weights['max_depth']:
+    #     print(depth)
 
-    board_score = sum({
-        sum(get_current_player_piece_scores(board,weights)),
-        checkmate,
-        get_king_spaces(board),
-        -sum(get_opponent_piece_scores(board=board,weights=weights)),
-        # -depth,
-        }
-    ) 
-    setattr(current_move,'weight',board_score/(depth+1))
+    # print(board_score)
+    setattr(current_move,'weight',board_score)
     # print(current_move.weight)
     # print(current_move)
     return current_move

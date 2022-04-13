@@ -36,13 +36,13 @@ def adapt(request):
     board_piece_count = p+r+n+q+b+k+P+R+N+Q+B+K
     # print(board_piece_count)
     # max_depth = math.ceil(6*(44-board_piece_count)/32)
-    max_depth = math.ceil((16/(board_piece_count))+2)
+    max_depth = math.ceil((16/(board_piece_count)+1))
     print("MAX_DEPTH",max_depth)
     #adapt to detpth
     # print(moves)
     # print(fen_string)
     return {
-        "max_depth":max_depth,
+        "max_depth":5,#max_depth,
         "king_weight":1,
         "queen_weight":1,
         "rook_weight":1,
