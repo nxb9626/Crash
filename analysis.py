@@ -25,7 +25,7 @@ def util_funciton(current_move:WeightedMove,depth, weights:dict)->WeightedMove:
         alread_seen_board += -5
         seen_boards.append(current_move.fen)
     
-    board_score = sum(get_current_player_piece_scores(board,weights)) + game_state
+    board_score = get_current_player_piece_scores(board,weights) + game_state
         # get_king_spaces(board),
         # -1*sum(get_opponent_piece_scores(board,weights)),
         # }
@@ -48,7 +48,7 @@ def get_current_player_piece_scores(board:chess.Board,weights:dict):
     n = len(list(board.pieces(chess.KNIGHT,board.turn))) * weights['knight_weight'] * 3
     b = len(list(board.pieces(chess.BISHOP,board.turn))) * weights['bishop_weight'] * 3
     p = len(list(board.pieces(chess.PAWN,board.turn))) * weights['pawn_weight'] 
-    return (p,r,n,q,b)
+    return p+r+n+q+b
 
 def get_opponent_piece_scores(board:chess.Board,weights:dict):
     # K = len(list(board.pieces(chess.KING, not board.turn))) * weights['king_weight'] * 20
@@ -57,7 +57,7 @@ def get_opponent_piece_scores(board:chess.Board,weights:dict):
     N = len(list(board.pieces(chess.KNIGHT, not board.turn))) * weights['knight_weight'] * 3
     B = len(list(board.pieces(chess.BISHOP, not board.turn))) * weights['bishop_weight'] * 3
     P = len(list(board.pieces(chess.PAWN, not board.turn))) * weights['pawn_weight']
-    return (P,R,N,Q,B)
+    return P+R+N+Q+B
 
 def get_king_spaces(board:chess.Board):
     count = 0

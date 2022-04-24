@@ -4,7 +4,7 @@ Rusn a bot as a server, which receives fenstrings and returns a chosen move
 import math
 import operator
 import chess
-import multiprocessing
+# import multiprocessing
 from functools import partial
 from adapt_server import adapt
 import random
@@ -42,7 +42,8 @@ def mini_maxi(fen, weights):
     
     seen_boards = set()
     seen_boards.add(fen)
-    next_boards = generate_positions(WeightedMove(fen,None,None),seen_boards=seen_boards)
+    next_boards = generate_positions(WeightedMove(fen,None,None),
+        seen_boards=seen_boards)
     # pool = multiprocessing.Pool(processes=12)
     # judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
     judged = []
