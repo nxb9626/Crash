@@ -4,7 +4,7 @@ Rusn a bot as a server, which receives fenstrings and returns a chosen move
 import math
 import operator
 import chess
-# import multiprocessing
+import multiprocessing
 from functools import partial
 from adapt_server import adapt
 import random
@@ -37,28 +37,27 @@ def bot(request):
 
 def mini_maxi(fen, weights):
     """
-    wrapper function for the min_max algorithm, easier to call from api call
+    wrapper function for the min_max algorithm, easier to call
     """
     
     seen_boards = set()
     seen_boards.add(fen)
     next_boards = generate_positions(WeightedMove(fen,None,None),
         seen_boards=seen_boards)
-    # pool = multiprocessing.Pool(processes=12)
-    # judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
-    judged = []
-    for board in next_boards:
-        judged.append(min_max(board,weights=weights))
+    pool = multiprocessing.Pool(processes=12)
+    judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
+    # judged = []
+    # for board in next_boards:
+    #     judged.append(min_max(board,weights=weights))
     # print(judged)
     max_weight = max(judged,key=operator.attrgetter('weight')).weight 
     best_choices = [x for x in judged if x.weight == max_weight]
-    # print("JUDGED: ",judged)
-    # print("WEIGHT:", max_weight)
-    # print("ALL_CHOICES: ",judged)
-    # print("BEST_CHOICES: ",best_choices)
+
     choice = random.choice(best_choices)
-    
+    i=0
     while choice.parent.parent is not None:
+        print(i)
+        i+=1
         choice = choice.parent
 
     return(choice)

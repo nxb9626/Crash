@@ -9,7 +9,7 @@ import chess.engine
 import bot_server
 
 ################################################################################
-STOCKFISH_ENGINE = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+# STOCKFISH_ENGINE = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
 WHITE_BOT_URL = 'http://127.0.0.1:5000'
 BLACK_BOT_URL = 'http://127.0.0.1:5000'
 ################################################################################
@@ -40,6 +40,7 @@ def black_input(fen,move:ch.Move):
     chosen_move = move.json()['move']
     return ch.Move.from_uci(chosen_move)
     # return chosen_move
+    
 def bot_input(fen,move:ch.Move):
     move = bot_server.bot(request={'fen':fen,'move':move})
     # chosen_move = move.json()['move']
@@ -118,7 +119,7 @@ def main():
     fen_3 = "1k5r/pP3ppp/3p2b1/1BN1n3/1Q2P3/P1B5/KP3P1P/7q w - - 1 0"
     fen_k="8/1K6/8/1k6/8/8/p7/8 w - - 0 1"
 
-    x = gameLoop(fen_k, black_move=stockfish_input, white_move=stockfish_input)
+    x = gameLoop(fen_k, black_move=bot_input, white_move=bot_input)
 
     return (x[0], {
         '0-1':'Pink', #black
