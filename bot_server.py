@@ -64,10 +64,6 @@ def mini_maxi(fen, weights):
     # i=0
     # print(choice)
     while choice.parent.parent is not None:
-        # print(i)
-        # print(choice)
-        # i+=1
-        # print(choice)
         choice = choice.parent
     print(choice)
     return(choice)
@@ -87,50 +83,35 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
     # Final depth case
     if depth==weights['max_depth']:
         return util_funciton(current_move, depth, weights=weights)
-    # next_boards = []
+
+    next_boards = []
     potential_next_moves = list(current_board.legal_moves)
-    #max player
-    if depth % 2 == 0:
-        # best = WeightedMove("",move=None,weight=-math.inf)
-        for m in potential_next_moves:
-            current_board.push(m)
-            fen = current_board.fen()
-            current_board.pop()
 
-            seen_boards.add(str(fen))
+    for m in potential_next_moves:
+        current_board.push(m)
+        fen = current_board.fen()
+        current_board.pop()
 
-            wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
-            setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
-            best = max([best,wm], key=operator.attrgetter('weight'))                
-            alpha = max([alpha,best], key=operator.attrgetter('weight'))
-            # next_boards.append(wm)
-            
-            if beta.weight <= alpha.weight:
-                break
-        return best
-
-    #min player
-    else:
-        best = WeightedMove("",move=None,weight=math.inf)
-        for m in potential_next_moves:
-            current_board.push(m)
-            fen = current_board.fen()
-            current_board.pop()
-            
-            seen_boards.add(str(fen))
+        if fen in seen_boards: 
+            continue
+        else:
+            seen_boards.add(fen)
             wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
             # Recurse to get weights correctly set
-            setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
-            best = min([best,wm], key=operator.attrgetter('weight'))                
-            beta = min([beta,best], key=operator.attrgetter('weight'))
-            # next_boards.append(wm)
-            if beta.weight <= alpha.weight:
-                break
+            min_max(current_move=wm,weights=weights,depth=depth+1)
+            next_boards.append(wm)
+    # Apply weights to moves
 
-        # if len(next_boards) == 0:
-        #     return util_funciton(current_move, depth, weights=weights)
+    if len(next_boards) == 0:
+        return util_funciton(current_move, depth, weights=weights)
    
+    if depth % 2 == 0:
+        best = max(next_boards, key=operator.attrgetter('weight'))
         return best
+
+    if depth % 2 == 1:
+        worst = min(next_boards, key=operator.attrgetter('weight'))
+        return worst
 
 def generate_positions(current_move: WeightedMove, seen_boards:set)->WeightedMove:
     """
@@ -166,7 +147,7 @@ if __name__=="__main__":
     fen_1="8/2K1p3/1p5N/4p1q1/4k1N1/3n2p1/Q3B3/7R w - - 0 2"
     # fen = "r1b2Bk1/pp1p4/2p4p/8/8/3P4/PPP1PPPP/RN1QKB1R w KQkq - 0 1"
     fen_k = "8/1K6/8/1k6/8/8/p7/8 w - - 0 1"
-    game = chess.Board(fen_k)
+    game = chess.Board(fen_1)
     # print(len(list(game.legal_moves)))
     # print(len(list(game.pieces())))
     # move = WeightedMove(game.fen(),chess.Move.from_uci("e2e4"),None)
