@@ -108,8 +108,8 @@ def user_input(fen,move) -> ch.Move:
     return move
 
     
-def stockfish_input(fen,move)->ch.Move:
-    return STOCKFISH_ENGINE.play(ch.Board(fen),chess.engine.Limit(time=.0001)).move
+# def stockfish_input(fen,move)->ch.Move:
+#     return STOCKFISH_ENGINE.play(ch.Board(fen),chess.engine.Limit(time=.0001)).move
 
 
 def main():

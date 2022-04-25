@@ -3,6 +3,7 @@ Rusn a bot as a server, which receives fenstrings and returns a chosen move
 """
 import math
 import operator
+from pprint import pp
 import chess
 import multiprocessing
 from functools import partial
@@ -44,15 +45,16 @@ def mini_maxi(fen, weights):
     seen_boards.add(fen)
     next_boards = generate_positions(WeightedMove(fen,None,None),
         seen_boards=seen_boards)
+
     pool = multiprocessing.Pool(processes=12)
     judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
     # judged = []
     # for board in next_boards:
-    #     judged.append(min_max(board,weights=weights))
-    # print(judged)
+        # judged.append(min_max(board,weights=weights))
+    pp(judged)
     max_weight = max(judged,key=operator.attrgetter('weight')).weight 
     best_choices = [x for x in judged if x.weight == max_weight]
-
+    
     choice = random.choice(best_choices)
     i=0
     while choice.parent.parent is not None:
@@ -86,7 +88,7 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
             current_board.push(m)
             fen = current_board.fen()
             current_board.pop()
-            
+
             seen_boards.add(fen)
 
             wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
@@ -134,6 +136,7 @@ def generate_positions(current_move: WeightedMove, seen_boards:set)->WeightedMov
     """
 
     current_board = chess.Board(fen=current_move.fen)
+    print("current_turn:",current_board.turn)
     # print(current_board)
     if current_board.is_game_over():
         return []
@@ -153,12 +156,13 @@ def generate_positions(current_move: WeightedMove, seen_boards:set)->WeightedMov
 
 
 if __name__=="__main__":
-    app.run(threaded=True, port=5000)
+    # app.run(threaded=True, port=5000)
     fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
     fen_3="8/1Kn1p3/1p5N/4p1q1/4k1N1/3R2p1/Qn2B3/7R w - - 0 1"
     fen_1="8/2K1p3/1p5N/4p1q1/4k1N1/3n2p1/Q3B3/7R w - - 0 2"
     # fen = "r1b2Bk1/pp1p4/2p4p/8/8/3P4/PPP1PPPP/RN1QKB1R w KQkq - 0 1"
-    game = chess.Board(fen)
+    fen_k = "8/1K6/8/1k6/8/8/p7/8 w - - 0 1"
+    game = chess.Board(fen_k)
     # print(len(list(game.legal_moves)))
     # print(len(list(game.pieces())))
     # move = WeightedMove(game.fen(),chess.Move.from_uci("e2e4"),None)

@@ -9,5 +9,8 @@ class WeightedMove( object ):
         self.parent=parent
 
     def __repr__(self) -> str:
-        return self.fen+'\n'+self.move.uci()+'\n'+str(self.weight)
+        if self.move != None:
+            return self.fen+' '+self.move.uci()+' '+str(self.weight)
+        else:
+            return str(self.weight)
         
