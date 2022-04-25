@@ -117,10 +117,10 @@ def main():
     fen_1="r1b2b1r/pp3Qp1/2nkn2p/3ppP1p/P1p5/1NP1NB2/1PP1PPR1/1K1R3q w - - 0 1"
     fen_2="kbK5/pp6/1P6/8/8/8/8/R7 w - - 0 1"
     fen_3="8/1Kn1p3/1p5N/4p1q1/4k1N1/3R2p1/Qn2B3/7R w - - 0 1"
-    fen_3 = "1k5r/pP3ppp/3p2b1/1BN1n3/1Q2P3/P1B5/KP3P1P/7q w - - 1 0"
+    # fen_3 = "1k5r/pP3ppp/3p2b1/1BN1n3/1Q2P3/P1B5/KP3P1P/7q w - - 1 0"
     fen_k="8/1K6/8/1k6/8/8/p7/8 w - - 0 1"
 
-    x = gameLoop(fen_1, black_move=bot_input, white_move=bot_input)
+    x = gameLoop(fen_3, black_move=bot_input, white_move=bot_input)
 
     return (x[0], {
         '0-1':'Pink', #black
@@ -134,7 +134,7 @@ def main():
 if __name__ == '__main__':    
     i = 0
     results = []
-    while i < 1:
+    while i < 10:
         results.append(main())
         i+=1
 
