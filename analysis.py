@@ -41,12 +41,12 @@ def get_piece_counts(board:chess.Board):
     pieces['b'] = len(list(board.pieces(chess.BISHOP, board.turn))) 
     pieces['p'] = len(list(board.pieces(chess.PAWN, board.turn))) 
     #opponent pieces
-    pieces['K'] = -len(list(board.pieces(chess.KING, not board.turn))) 
-    pieces['Q'] = -len(list(board.pieces(chess.QUEEN, not board.turn))) 
-    pieces['R'] = -len(list(board.pieces(chess.ROOK, not board.turn))) 
-    pieces['N'] = -len(list(board.pieces(chess.KNIGHT, not board.turn))) 
-    pieces['B'] = -len(list(board.pieces(chess.BISHOP, not board.turn))) 
-    pieces['P'] = -len(list(board.pieces(chess.PAWN, not board.turn))) 
+    pieces['K'] = len(list(board.pieces(chess.KING, not board.turn))) 
+    pieces['Q'] = len(list(board.pieces(chess.QUEEN, not board.turn))) 
+    pieces['R'] = len(list(board.pieces(chess.ROOK, not board.turn))) 
+    pieces['N'] = len(list(board.pieces(chess.KNIGHT, not board.turn))) 
+    pieces['B'] = len(list(board.pieces(chess.BISHOP, not board.turn))) 
+    pieces['P'] = len(list(board.pieces(chess.PAWN, not board.turn))) 
     return pieces
 
 def apply_piece_weights(pieces:dict,weights:dict):
@@ -59,12 +59,12 @@ def apply_piece_weights(pieces:dict,weights:dict):
     scores['b'] = pieces['b']* weights['bishop_weight'] * 3
     scores['p'] = pieces['p']* weights['pawn_weight'] * 1
     #opponent pieces
-    scores['K'] = pieces['K']* weights['king_weight'] * 20
-    scores['Q'] = pieces['Q']* weights['queen_weight'] * 9
-    scores['R'] = pieces['R']* weights['rook_weight'] * 5
-    scores['N'] = pieces['N']* weights['knight_weight'] * 3
-    scores['B'] = pieces['B']* weights['bishop_weight'] * 3
-    scores['P'] = pieces['P']* weights['pawn_weight'] * 1
+    scores['K'] = pieces['K']* weights['king_weight'] * -20
+    scores['Q'] = pieces['Q']* weights['queen_weight'] * -9
+    scores['R'] = pieces['R']* weights['rook_weight'] * -5
+    scores['N'] = pieces['N']* weights['knight_weight'] * -3
+    scores['B'] = pieces['B']* weights['bishop_weight'] * -3
+    scores['P'] = pieces['P']* weights['pawn_weight'] * -1
     return scores
 
 def get_king_spaces(board:chess.Board):

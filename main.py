@@ -40,7 +40,7 @@ def black_input(fen,move:ch.Move):
     chosen_move = move.json()['move']
     return ch.Move.from_uci(chosen_move)
     # return chosen_move
-    
+
 def bot_input(fen,move:ch.Move):
     move = bot_server.bot(request={'fen':fen,'move':move})
     # chosen_move = move.json()['move']
@@ -62,6 +62,7 @@ def gameLoop(fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         print(current_player.name,end="'s next move\n")
         fancyPrint = ui.Board(game)
         fancyPrint.pp()
+        # print(game)
         # input()
         # clear old board
 
@@ -119,7 +120,7 @@ def main():
     fen_3 = "1k5r/pP3ppp/3p2b1/1BN1n3/1Q2P3/P1B5/KP3P1P/7q w - - 1 0"
     fen_k="8/1K6/8/1k6/8/8/p7/8 w - - 0 1"
 
-    x = gameLoop(fen_k, black_move=bot_input, white_move=bot_input)
+    x = gameLoop(fen_1, black_move=bot_input, white_move=bot_input)
 
     return (x[0], {
         '0-1':'Pink', #black

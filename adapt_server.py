@@ -38,11 +38,11 @@ def adapt(request):
     #Calculating how deep should be searched
     board_piece_count = p+r+n+q+b+k+P+R+N+Q+B+K
     max_depth = math.ceil((16/(board_piece_count)+1))
-    if max_depth %2 == 0:
-        max_depth -=1
-    print("MAX_DEPTH",max_depth)
+    if max_depth % 2 == 0:
+        max_depth-=1
+    # print("MAX_DEPTH",max_depth)
     return {
-        "max_depth":max_depth,
+        "max_depth":3,#max_depth,
         "king_weight":1,
         "queen_weight":1,
         "rook_weight":1,

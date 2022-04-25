@@ -31,7 +31,7 @@ def bot(request):
     weights = adapt(x)# resp.json()
     move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
-  
+    print(move)
     choice = move.move
     # print(move)
     return {'move':choice.uci()}
@@ -50,24 +50,32 @@ def mini_maxi(fen, weights):
     judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
     # judged = []
     # for board in next_boards:
-        # judged.append(min_max(board,weights=weights))
+    #     judged.append(min_max(board,weights=weights))
     pp(judged)
-    max_weight = max(judged,key=operator.attrgetter('weight')).weight 
-    best_choices = [x for x in judged if x.weight == max_weight]
-    
-    choice = random.choice(best_choices)
-    i=0
-    while choice.parent.parent is not None:
-        print(i)
-        i+=1
-        choice = choice.parent
+    best_choices = [x for x in judged if x.weight != math.inf]
+    best_choices = [x for x in best_choices if x.weight != -math.inf]
 
+    max_weight = max(best_choices,key=operator.attrgetter('weight')).weight 
+    best_choices = [x for x in judged if x.weight == max_weight]
+
+    pp(best_choices)
+    pp(max_weight)
+    choice = random.choice(best_choices)
+    # i=0
+    # print(choice)
+    while choice.parent.parent is not None:
+        # print(i)
+        # print(choice)
+        # i+=1
+        # print(choice)
+        choice = choice.parent
+    print(choice)
     return(choice)
     # return max([ min_max(x,weights=weights,seen_boards=seen_boards) for x in next_boards],
         # key=operator.attrgetter('weight'))
 
 def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
-    alpha=WeightedMove("",move=None,parent=None,weight=-math.inf),
+    alpha=WeightedMove("",move=None,parent=None,weight=-1*math.inf),
         beta=WeightedMove("",move=None,parent=None,weight=math.inf)
             ) -> WeightedMove:
     """
@@ -79,30 +87,26 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
     # Final depth case
     if depth==weights['max_depth']:
         return util_funciton(current_move, depth, weights=weights)
-    next_boards = []
+    # next_boards = []
     potential_next_moves = list(current_board.legal_moves)
     #max player
     if depth % 2 == 0:
-        best = WeightedMove("",move=None,weight=-math.inf)
+        # best = WeightedMove("",move=None,weight=-math.inf)
         for m in potential_next_moves:
             current_board.push(m)
             fen = current_board.fen()
             current_board.pop()
 
-            seen_boards.add(fen)
+            seen_boards.add(str(fen))
 
             wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
             setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
             best = max([best,wm], key=operator.attrgetter('weight'))                
             alpha = max([alpha,best], key=operator.attrgetter('weight'))
-            next_boards.append(wm)
+            # next_boards.append(wm)
             
             if beta.weight <= alpha.weight:
                 break
-        # if len(next_boards) == 0:
-        #     print("nomore")
-        #     return util_funciton(current_move, depth, weights=weights)
-        
         return best
 
     #min player
@@ -113,13 +117,13 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
             fen = current_board.fen()
             current_board.pop()
             
-            seen_boards.add(fen)
+            seen_boards.add(str(fen))
             wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
             # Recurse to get weights correctly set
             setattr(wm,'weight',min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta).weight)
             best = min([best,wm], key=operator.attrgetter('weight'))                
             beta = min([beta,best], key=operator.attrgetter('weight'))
-            next_boards.append(wm)
+            # next_boards.append(wm)
             if beta.weight <= alpha.weight:
                 break
 
