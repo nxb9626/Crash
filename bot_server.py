@@ -27,8 +27,28 @@ def bot(request):
     """
     x = request#.get_json()
     fen_string = x['fen']
-    # print(fen_string)
-    weights = adapt(x)# resp.json()
+    weights={
+        "max_depth":3,
+        "king_weight":1,
+        "queen_weight":1,
+        "rook_weight":1,
+        "bishop_weight":1,
+        "knight_weight":1,
+        "pawn_weight":1,
+        "pawn_structure_weight":1,
+        "space_weight":1,
+        "center_control":1,
+        "opponent_threats":1,
+        "piece_positions":{
+            "rook_depth - 7th best":1,
+            "bishops_on_diagonals":1,
+            "rook_in_open_columns":1
+        },
+        "checking_opponent":1,
+        "attacking_opponent":1
+    }
+    if x['smart']:
+        weights = adapt(x)
     move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
     print(move)

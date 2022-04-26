@@ -9,7 +9,7 @@ import chess.engine
 import bot_server
 
 ################################################################################
-# STOCKFISH_ENGINE = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+
 WHITE_BOT_URL = 'http://127.0.0.1:5000'
 BLACK_BOT_URL = 'http://127.0.0.1:5000'
 ################################################################################
@@ -42,10 +42,15 @@ def black_input(fen,move:ch.Move):
     # return chosen_move
 
 def bot_input(fen,move:ch.Move):
-    move = bot_server.bot(request={'fen':fen,'move':move})
+    print(fen)
+    move = bot_server.bot(request={'fen':fen,'move':move,'smart':False})
+
     # chosen_move = move.json()['move']
     return ch.Move.from_uci(move['move'])
-
+def smart_bot_input(fen,move:ch.Move):
+    request={'fen':fen,'move':move,'smart':True}
+    move = bot_server.bot(request=request)
+    return ch.Move.from_uci(move['move'])
 def gameLoop(fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         black_move=black_input, white_move=white_input):
     game = ch.Board(fen)
@@ -90,7 +95,7 @@ def gameLoop(fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
 
 def print_move(move,board):
     print(board.piece_at(move.from_square), end='')
-    print(str( move)[0:2], end=', ')
+    print(str(move)[0:2], end=', ')
 
 def print_move_list(move_list, board):
     for i in move_list:
@@ -108,19 +113,19 @@ def user_input(fen,move) -> ch.Move:
         return user_input(fen,move)
     return move
 
-    
-# def stockfish_input(fen,move)->ch.Move:
-#     return STOCKFISH_ENGINE.play(ch.Board(fen),chess.engine.Limit(time=.0001)).move
+STOCKFISH_ENGINE = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
+def stockfish_input(fen,move)->ch.Move:
+    return STOCKFISH_ENGINE.play(ch.Board(fen),chess.engine.Limit(time=.0001)).move
 
 
 def main():
     fen_1="r1b2b1r/pp3Qp1/2nkn2p/3ppP1p/P1p5/1NP1NB2/1PP1PPR1/1K1R3q w - - 0 1"
-    fen_2="kbK5/pp6/1P6/8/8/8/8/R7 w - - 0 1"
+    fen_2="kbK5/pp6/1P6/8/8/8/8/R7 b - - 0 1"
     fen_3="8/1Kn1p3/1p5N/4p1q1/4k1N1/3R2p1/Qn2B3/7R w - - 0 1"
     # fen_3 = "1k5r/pP3ppp/3p2b1/1BN1n3/1Q2P3/P1B5/KP3P1P/7q w - - 1 0"
     fen_k="8/1K6/8/1k6/8/8/p7/8 w - - 0 1"
 
-    x = gameLoop(fen_3, black_move=bot_input, white_move=bot_input)
+    x = gameLoop( black_move=bot_input, white_move=smart_bot_input)
 
     return (x[0], {
         '0-1':'Pink', #black

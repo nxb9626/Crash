@@ -41,6 +41,7 @@ def adapt(request):
     if max_depth % 2 == 0:
         max_depth-=1
     # print("MAX_DEPTH",max_depth)
+
     return {
         "max_depth":3,#max_depth,
         "king_weight":1,
