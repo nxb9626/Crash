@@ -74,13 +74,68 @@ def get_king_spaces(board:chess.Board):
             count +=1
     return count
 
+def get_central_squares_control(board:chess.Board):
+    symbols = {'P','K','Q','R','N','B'}
+    if board.turn != chess.WHITE:
+        symbols = {'p','k','q','r','n','b'}
+    control_count = 0
+    C3 = board.piece_at(chess.C3)
+    if C3 is not None and C3.symbol() in symbols:
+        control_count += 1
+    C4 = board.piece_at(chess.C4)
+    if C4 is not None and C4.symbol() in symbols:
+        control_count += 1
+    C5 = board.piece_at(chess.C5)
+    if C5 is not None and C5.symbol() in symbols:
+        control_count += 1
+    C6 = board.piece_at(chess.C6)
+    if C6 is not None and C6.symbol() in symbols:
+        control_count += 1
+    D3 = board.piece_at(chess.D3)
+    if D3 is not None and D3.symbol() in symbols:
+        control_count += 1
+    D4 = board.piece_at(chess.D4)
+    if D4 is not None and D4.symbol() in symbols:
+        control_count += 1
+    D5 = board.piece_at(chess.D5)
+    if D5 is not None and D5.symbol() in symbols:
+        control_count += 1
+    D6 = board.piece_at(chess.D6)
+    if D6 is not None and D6.symbol() in symbols:
+        control_count += 1
+    E3 = board.piece_at(chess.E3)
+    if E3 is not None and E3.symbol() in symbols:
+        control_count += 1
+    E4 = board.piece_at(chess.E4)
+    if E4 is not None and E4.symbol() in symbols:
+        control_count += 1
+    E5 = board.piece_at(chess.E5)
+    if E5 is not None and E5.symbol() in symbols:
+        control_count += 1
+    E6 = board.piece_at(chess.E6)
+    if E6 is not None and E6.symbol() in symbols:
+        control_count += 1
+    F3 = board.piece_at(chess.F3)
+    if F3 is not None and F3.symbol() in symbols:
+        control_count += 1
+    F4 = board.piece_at(chess.F4)
+    if F4 is not None and F4.symbol() in symbols:
+        control_count += 1
+    F5 = board.piece_at(chess.F5)
+    if F5 is not None and F5.symbol() in symbols:
+        control_count += 1
+    F6 = board.piece_at(chess.F6)
+    if F6 is not None and F6.symbol() in symbols:
+        control_count += 1
+    return control_count
 
 
 if __name__=="__main__":
     fen_k="8/1K6/8/1k6/8/8/p7/8 b - - 0 1"
     fen_checkmate="8/Kqk5/8/8/8/8/8/8 b - - 8 9"
     fen_stalemate="2q5/K7/2k5/8/8/8/8/8 w - - 4 7"
-    board = chess.Board(fen=fen_k)
+    fen_stupid="8/8/8/8/33/8/8/8 w - - 0 1"
+    board = chess.Board(fen=fen_stupid)
     weights= {
         "max_depth":5,
         "king_weight":1,
@@ -106,7 +161,7 @@ if __name__=="__main__":
     pp(sum(apply_piece_weights(x, weights).values()))
     pp(get_king_spaces(board))
     pp(get_game_status(board))
-
+    pp(get_central_squares_control(board))
     print(board)
     
     
