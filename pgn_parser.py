@@ -86,7 +86,10 @@ if __name__ == "__main__":
         if x.headers['Result'] not in {'1-0','0-1'}:
             x = chess.pgn.read_game(file_name)
             continue
-        if i > 1000:
+        if x.headers['Event'] != "Rated Classical game":
+            x = chess.pgn.read_game(file_name)
+            continue
+        if i > 100:
             break
         measurements.extend(measure_game(x))
         i+=1
