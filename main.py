@@ -134,7 +134,7 @@ def main():
 if __name__ == '__main__':    
     i = 0
     results = []
-    while i < 10:
+    while i < 1:
         results.append(main())
         i+=1
 
