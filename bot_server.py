@@ -29,7 +29,7 @@ def bot(request):
     fen_string = x['fen']
     
     weights={
-        'max_depth':3,
+        'max_depth':1,
         'smart':False,
         'move_count':request['move_count']
     }
@@ -39,9 +39,9 @@ def bot(request):
     
     move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
-    print(move)
-    choice = move.move
     # print(move)
+    choice = move.move
+    print(move)
     return {'move':choice.uci()}
 
 def mini_maxi(fen, weights):
@@ -55,7 +55,7 @@ def mini_maxi(fen, weights):
 
     pool = multiprocessing.Pool(processes=15)
     judged = pool.map(partial(min_max, weights=weights, seen_boards=seen_boards), next_boards)
-    pp(judged)
+    # pp(judged)
     best_choices = [x for x in judged if x.weight != math.inf]
     best_choices = [x for x in best_choices if x.weight != -math.inf]
 
@@ -146,7 +146,7 @@ def generate_positions(current_move: WeightedMove, seen_boards:set)->WeightedMov
     """
 
     current_board = chess.Board(fen=current_move.fen)
-    print("current_turn:",current_board.turn)
+    # print("current_turn:",current_board.turn)
     # print(current_board)
     if current_board.is_game_over():
         return []

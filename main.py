@@ -41,7 +41,7 @@ def black_input(fen,move:ch.Move,game_depth=0):
     # return chosen_move
 
 def bot_input(fen,move:ch.Move,game_depth=0):
-    print(fen)
+    # print(fen)
     move = bot_server.bot(request={'fen':fen,'move':move,'smart':False,'move_count':game_depth})
 
     # chosen_move = move.json()['move']
@@ -89,7 +89,6 @@ def gameLoop(fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         # print('Player turn: ', current_player, '\n')
         current_player = next_turn[current_player]
         
-    print(current_player.name,end="'s next move\n")
     fancyPrint = ui.Board(game)
     fancyPrint.pp()
     return "Winner: ", game.result()
@@ -129,9 +128,9 @@ def main():
     x = gameLoop( black_move=bot_input, white_move=smart_bot_input)
 
     return (x[0], {
-        '0-1':'Pink', #black
+        '0-1':'Black (Lower Case)', #black
         '1/2-1/2':'stalemate',
-        '1-0':'Blue', # white
+        '1-0':'White (Upper Case)', # white
         '1-1':'tie'
     }[x[1]])
 

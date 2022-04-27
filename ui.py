@@ -3,8 +3,8 @@ from logging import *
 import enum
 from typing import List
 
-black_color = '\033[36m' #cyan
-white_color = '\033[95m\033[04m' #pink
+black_color = ''#\033[36m' #cyan
+white_color = ''#\033[95m\033[04m' #pink
 reset_color = '\033[0m'
 
 class Piece:
