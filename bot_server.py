@@ -7,11 +7,11 @@ from pprint import pp
 import chess
 import multiprocessing
 from functools import partial
-from adapt_server import adapt
 import random
 from analysis import util_funciton 
 from flask import Flask, request
 from weighted import WeightedMove
+
 app = Flask(__name__)
 
 ################################################################################
@@ -19,7 +19,7 @@ WHITE_BOT_URL = 'http://127.0.0.1:5000'
 BLACK_BOT_URL = 'http://127.0.0.1:5000'
 ################################################################################
 
-@app.route("/")
+# @app.route("/")
 def bot(request):
     """
     responds to a get request with json
@@ -27,28 +27,16 @@ def bot(request):
     """
     x = request#.get_json()
     fen_string = x['fen']
+    
     weights={
-        "max_depth":3,
-        "king_weight":1,
-        "queen_weight":1,
-        "rook_weight":1,
-        "bishop_weight":1,
-        "knight_weight":1,
-        "pawn_weight":1,
-        "pawn_structure_weight":1,
-        "space_weight":1,
-        "center_control":1,
-        "opponent_threats":1,
-        "piece_positions":{
-            "rook_depth - 7th best":1,
-            "bishops_on_diagonals":1,
-            "rook_in_open_columns":1
-        },
-        "checking_opponent":1,
-        "attacking_opponent":1
+        'max_depth':3,
+        'smart':False,
+        'move_count':request['move_count']
     }
-    if x['smart']:
-        weights = adapt(x)
+    if request['smart']:
+        weights['smart'] = True
+    
+    
     move = mini_maxi(fen=fen_string, weights=weights)
     # iterate up the tree  (max of n depth) to go with best move
     print(move)
@@ -94,7 +82,7 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
     current_board = chess.Board(fen=current_move.fen)
     # Final depth case
     if depth==weights['max_depth']:
-        return util_funciton(current_move, depth, weights=weights)
+        return util_funciton(current_move, weights=weights)
     next_boards = []
     potential_next_moves = list(current_board.legal_moves)
     
@@ -108,21 +96,18 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
             current_board.pop()
             if fen in seen_boards:
                 continue
-
             else:
                 seen_boards.add(fen)
-
                 wm = WeightedMove(fen=str(fen),move=m,parent=current_move)
                 min_max(current_move=wm,weights=weights,depth=depth+1,alpha=alpha,beta=beta)
                 best = max([best,wm], key=operator.attrgetter('weight'))                
                 alpha = max([alpha,best], key=operator.attrgetter('weight'))
                 next_boards.append(wm)
-                
                 if beta.weight <= alpha.weight:
                     break
         if len(next_boards) == 0:
-            return util_funciton(current_move, depth, weights=weights)
-        
+            return util_funciton(current_move, weights=weights)
+        current_move.weight = best.weight
         return best
 
     #min player
@@ -150,7 +135,7 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
 
         if len(next_boards) == 0:
             return util_funciton(current_move, depth, weights=weights)
-   
+        current_move.weight = best.weight
         return best
 
 def generate_positions(current_move: WeightedMove, seen_boards:set)->WeightedMove:

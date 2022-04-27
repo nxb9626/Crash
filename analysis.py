@@ -1,9 +1,10 @@
 from pprint import pp
-from tabnanny import check
 import chess
 from weighted import WeightedMove
+from adapt_server import adapt
+import math
 
-def util_funciton(current_move:WeightedMove,depth, weights:dict)->WeightedMove:
+def util_funciton(current_move:WeightedMove, weights:dict)->WeightedMove:
     """
     fen = fenstring of current board
     weights = weights being used to jude board
@@ -12,24 +13,58 @@ def util_funciton(current_move:WeightedMove,depth, weights:dict)->WeightedMove:
     """
     board = chess.Board(current_move.fen)
 
-    game_status = get_game_status(board)
-    
     pieces = get_piece_counts(board)
-    piece_scores = apply_piece_weights(pieces,weights)
-    piece_worth = sum(piece_scores.values())
-    
-    board_score = piece_worth + game_status
+    scores = apply_piece_weights(pieces)
 
-    setattr(current_move,'weight',board_score)
+    scores.update({
+        'check':get_game_is_check(board),
+        'checkmate':get_game_is_checkmate(board),
+        'king_moves':get_king_spaces(board),
+        'central_control':get_central_squares_control(board),
+        'legal_moves': get_legal_moves(board)
+    })
+    if weights['smart']:
+        scores = adapt(scores, weights)
+
+    board_score = sum(scores.values())
+
+    current_move.weight = board_score
     return current_move
 
-def get_game_status(board:chess.Board):
-    game_status = 0
+def get_legal_moves(board:chess.Board):
+    return len(list(board.legal_moves))
+
+def get_max_depth(board:chess.Board):
+    k = len(list(board.pieces(chess.KING,board.turn))) 
+    q = len(list(board.pieces(chess.QUEEN,board.turn)))
+    r = len(list(board.pieces(chess.ROOK,board.turn))) 
+    n = len(list(board.pieces(chess.KNIGHT,board.turn)))
+    b = len(list(board.pieces(chess.BISHOP,board.turn)))
+    p = len(list(board.pieces(chess.PAWN,board.turn)))
+
+    K = len(list(board.pieces(chess.KING, not board.turn))) 
+    Q = len(list(board.pieces(chess.QUEEN, not board.turn)))
+    R = len(list(board.pieces(chess.ROOK, not board.turn))) 
+    N = len(list(board.pieces(chess.KNIGHT, not board.turn)))
+    B = len(list(board.pieces(chess.BISHOP, not board.turn)))
+    P = len(list(board.pieces(chess.PAWN, not board.turn)))
+
+    #Calculating how deep should be searched
+    board_piece_count = p+r+n+q+b+k+P+R+N+Q+B+K
+    max_depth = math.ceil((16/(board_piece_count)+1))
+    if max_depth % 2 == 0:
+        max_depth-=1
+    return max_depth
+
+def get_game_is_checkmate(board:chess.Board):
     if board.is_checkmate():
-        game_status += 1000
-    elif board.is_check():
-        game_status += 100
-    return game_status
+            return 10000
+    return 0
+
+def get_game_is_check(board:chess.Board):
+    if board.is_check():
+        return 100
+    return 0
 
 def get_piece_counts(board:chess.Board):
     pieces = {}
@@ -49,22 +84,22 @@ def get_piece_counts(board:chess.Board):
     pieces['P'] = len(list(board.pieces(chess.PAWN, not board.turn))) 
     return pieces
 
-def apply_piece_weights(pieces:dict,weights:dict):
+def apply_piece_weights(pieces:dict):
     scores = {}
     #current pieces
-    scores['k'] = pieces['k']* weights['king_weight'] * 20
-    scores['q'] = pieces['q']* weights['queen_weight'] * 9
-    scores['r'] = pieces['r']* weights['rook_weight'] * 5
-    scores['n'] = pieces['n']* weights['knight_weight'] * 3
-    scores['b'] = pieces['b']* weights['bishop_weight'] * 3
-    scores['p'] = pieces['p']* weights['pawn_weight'] * 1
+    scores['k'] = pieces['k']* 20
+    scores['q'] = pieces['q']* 9
+    scores['r'] = pieces['r']* 5
+    scores['n'] = pieces['n']* 3
+    scores['b'] = pieces['b']* 3
+    scores['p'] = pieces['p']* 1
     #opponent pieces
-    scores['K'] = pieces['K']* weights['king_weight'] * -20
-    scores['Q'] = pieces['Q']* weights['queen_weight'] * -9
-    scores['R'] = pieces['R']* weights['rook_weight'] * -5
-    scores['N'] = pieces['N']* weights['knight_weight'] * -3
-    scores['B'] = pieces['B']* weights['bishop_weight'] * -3
-    scores['P'] = pieces['P']* weights['pawn_weight'] * -1
+    scores['K'] = pieces['K']* -20
+    scores['Q'] = pieces['Q']* -9
+    scores['R'] = pieces['R']* -5
+    scores['N'] = pieces['N']* -3
+    scores['B'] = pieces['B']* -3
+    scores['P'] = pieces['P']* -1
     return scores
 
 def get_king_spaces(board:chess.Board):
@@ -137,7 +172,7 @@ if __name__=="__main__":
     fen_stupid="8/8/8/8/33/8/8/8 w - - 0 1"
     board = chess.Board(fen=fen_stupid)
     weights= {
-        "max_depth":5,
+        "max_depth":3,
         "king_weight":1,
         "queen_weight":1,
         "rook_weight":1,
@@ -158,10 +193,9 @@ if __name__=="__main__":
     }
     x = get_piece_counts(board) 
     pp(sum(x.values()))
-    pp(sum(apply_piece_weights(x, weights).values()))
+    pp(sum(apply_piece_weights(x).values()))
     pp(get_king_spaces(board))
-    pp(get_game_status(board))
+    pp(get_game_is_check(board))
     pp(get_central_squares_control(board))
     print(board)
-    
     

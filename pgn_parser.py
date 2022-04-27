@@ -6,7 +6,8 @@ import chess.pgn
 import chess
 import pickle
 import signal
-from sklearn import linear_model
+import numpy as np
+from sklearn import linear_model, preprocessing
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 import matplotlib.pyplot as plt # 3.5.1
@@ -15,23 +16,19 @@ import pandas # 1.4.1
 measurements = []
 def measure_positions(board:chess.Board, is_good):
     data = analysis.get_piece_counts(board)
-    data['w_pieces_count'] = sum({
-        data['p'],
-        data['r'],
-        data['k'],
-        data['b'],
-        data['q'],
-        data['n'],
-        }) * is_good
-    data['b_pieces_count'] = sum({
-        data['P'],
-        data['R'],
-        data['K'],
-        data['B'],
-        data['Q'],
-        data['N'],
-        }) * is_good
-
+    data['p'] = data['p'] * is_good
+    data['r'] = data['r'] * is_good
+    data['k'] = data['k'] * is_good
+    data['b'] = data['b'] * is_good
+    data['q'] = data['q'] * is_good
+    data['n'] = data['n'] * is_good
+    data['P'] = data['P'] * is_good
+    data['R'] = data['R'] * is_good
+    data['K'] = data['K'] * is_good
+    data['B'] = data['B'] * is_good
+    data['Q'] = data['Q'] * is_good
+    data['N'] = data['N'] * is_good
+    data['king_moves'] = analysis.get_king_spaces(board)
     data['check'] = 0
     if board.is_check(): 
         data['check'] = 1 
@@ -83,7 +80,7 @@ if __name__ == "__main__":
     x = chess.pgn.read_game(file_name)
 
     while x is not None:
-        if x.headers['Result'] not in {'1-0','0-1'}:
+        if x.headers['Result'] != '1-0':
             x = chess.pgn.read_game(file_name)
             continue
         if x.headers['Event'] != "Rated Classical game":
@@ -98,35 +95,53 @@ if __name__ == "__main__":
 
     # with open("measurements.obj",'wb') as measurements_file:
     #         pickle.dump(measurements,measurements_file,-1)
-    ocd = organized_chess_data = DataFrame(measurements)
-    print(organized_chess_data)
-    LR = linear_model.LinearRegression()
-    # with open("ocd.obj",'wb') as measurements_file:
-        # pickle.dump(ocd,measurements_file,-1)
-    # y_data = ocd['central_control']
-    # x_data = ocd['game_depth']#.drop('legal_moves',axis=1)
+    organized_chess_data = DataFrame(measurements)
+    min_max_scaling = preprocessing.MinMaxScaler()
+    cols = organized_chess_data.columns
+    game_depth = organized_chess_data['game_depth']
     
-    # ocd.drop('winner')
-    # x_train, x_test, y_train, y_test = train_test_split(x_data, y_data, test_size=0.3, random_state = 37)
+    normalized_ocd = min_max_scaling.fit_transform(organized_chess_data.values)
+    norm_ocd_df = DataFrame(normalized_ocd, columns=cols)
+    # norm_ocd_df['game_depth'] = game_depth
 
-    # LR.fit(x_data,y_data)
+    print(norm_ocd_df)
+    LR = linear_model.LinearRegression()
+   
+    # with open("ocd.obj",'wb') as measurements_file:
+    #     pickle.dump(ocd,measurements_file,-1)
+    y_data = norm_ocd_df['game_depth']
+    x_data = norm_ocd_df.drop('game_depth',axis=1)
+    
+    # norm_ocd_df.drop('winner')
+    # x_train, x_test, y_train, y_test = train_test_split(x_data, y_data)#, test_size=0.3, random_state = 37)
+
+    LR.fit(x_data,y_data)
     # y_pred = LR.predict(x_test)
     # r = r2_score(y_test, y_pred)
     # mse = mean_squared_error(y_test, y_pred)
 
     # print("r^2:               ", r)
     # print("mean square Error: ", mse)
-    # # 5 analyze Coefficients
-    # b = LR.intercept_
-    # m = LR.coef_
-    # print(LR.feature_names_in_)
-    # print("Coefficients:      ", m)
-    # print("Intercept:         ", b)
+    # 5 analyze Coefficients
 
+    names=LR.feature_names_in_
+    b = LR.intercept_
+    m = LR.coef_
+    model = {}
+    i=0
+    with open("ocd.obj",'wb') as measurements_file:
+        pickle.dump((names,m,b),measurements_file,-1)
+    for name in names:
+        # print(name, m[i])
+        model[name] = m[i]
+    print(names)
+    print("Coefficients:      ", m)
+    print("Intercept:         ", b)
+    np.set_printoptions(precision=5)
     x = 'game_depth'
     y = 'central_control'
     
-    plt.plot(ocd[x], ocd[y],'o')
+    plt.plot(norm_ocd_df[x], norm_ocd_df[y],'o')
     plt.xlabel(x)
     plt.ylabel(y)
     plt.show()

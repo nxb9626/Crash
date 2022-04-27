@@ -25,7 +25,7 @@ class FakeMove:
         return None
 
  
-def white_input(fen,move:ch.Move):
+def white_input(fen,move:ch.Move,game_depth=0):
     # print("white's move")
     move = requests.get(WHITE_BOT_URL, json={'fen':fen,'move':move})
     chosen_move = move.json()['move']
@@ -33,7 +33,7 @@ def white_input(fen,move:ch.Move):
     # x = list(game.legal_moves)
     return ch.Move.from_uci(chosen_move)
 
-def black_input(fen,move:ch.Move):
+def black_input(fen,move:ch.Move,game_depth=0):
     # print("blacks's move")
 
     move = requests.get(BLACK_BOT_URL, )
@@ -41,16 +41,18 @@ def black_input(fen,move:ch.Move):
     return ch.Move.from_uci(chosen_move)
     # return chosen_move
 
-def bot_input(fen,move:ch.Move):
+def bot_input(fen,move:ch.Move,game_depth=0):
     print(fen)
-    move = bot_server.bot(request={'fen':fen,'move':move,'smart':False})
+    move = bot_server.bot(request={'fen':fen,'move':move,'smart':False,'move_count':game_depth})
 
     # chosen_move = move.json()['move']
     return ch.Move.from_uci(move['move'])
-def smart_bot_input(fen,move:ch.Move):
-    request={'fen':fen,'move':move,'smart':True}
+
+def smart_bot_input(fen,move:ch.Move,game_depth=0):
+    request={'fen':fen,'move':move,'smart':True,'move_count':game_depth}
     move = bot_server.bot(request=request)
     return ch.Move.from_uci(move['move'])
+
 def gameLoop(fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         black_move=black_input, white_move=white_input):
     game = ch.Board(fen)
@@ -72,9 +74,9 @@ def gameLoop(fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         # clear old board
 
         if count%2 == 0:
-            move = white_move(game.fen(), move.uci())
+            move = white_move(game.fen(), move.uci(),count)
         else:
-            move = black_move(game.fen(), move.uci())
+            move = black_move(game.fen(), move.uci(),count)
         # print(count)
         # print(game.generate_legal_moves())
 
@@ -102,11 +104,11 @@ def print_move_list(move_list, board):
         print_move(i,board)
     print()
 
-def random_input(fen,move):
+def random_input(fen,move,game_depth=0):
     print("random's move")
     return random.choice(list(ch.Board(fen).legal_moves))
     
-def user_input(fen,move) -> ch.Move:
+def user_input(fen,move,game_depth=0) -> ch.Move:
     try:
         move = ch.Move.from_uci(input("Your Move:"))
     except:
@@ -114,7 +116,7 @@ def user_input(fen,move) -> ch.Move:
     return move
 
 STOCKFISH_ENGINE = chess.engine.SimpleEngine.popen_uci("/usr/games/stockfish")
-def stockfish_input(fen,move)->ch.Move:
+def stockfish_input(fen,move,game_depth=0)->ch.Move:
     return STOCKFISH_ENGINE.play(ch.Board(fen),chess.engine.Limit(time=.0001)).move
 
 
