@@ -134,7 +134,7 @@ def min_max(current_move=None, weights={}, seen_boards:set=set(), depth=0,
                     break
 
         if len(next_boards) == 0:
-            return util_funciton(current_move, depth, weights=weights)
+            return util_funciton(current_move, weights=weights)
         current_move.weight = best.weight
         return best
 

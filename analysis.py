@@ -58,7 +58,7 @@ def get_max_depth(board:chess.Board):
 
 def get_game_is_checkmate(board:chess.Board):
     if board.is_checkmate():
-            return 10000
+            return 100000000
     return 0
 
 def get_game_is_check(board:chess.Board):
